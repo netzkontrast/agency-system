@@ -6,6 +6,6 @@
     "test": "python -m pytest"
   },
   "dependencies": {
-    "pocketflow": "^0.0.3"
+    "pocketflow": "^1.0.4"
   }
 }

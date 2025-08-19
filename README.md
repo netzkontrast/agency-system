@@ -74,6 +74,24 @@ Die Anwendung ist unter http://localhost:3000 erreichbar.
 - `POST /api/judge/context` - LLM-as-judge für Kontextbewertung
 - `POST /api/persona` - Persona Management (CRUD)
 
+## Deployment
+
+### Vercel
+
+Um diese Anwendung auf Vercel zu deployen, klicken Sie auf den folgenden Button:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fcodespin-ai%2Fkohaerenz-protokoll)
+
+**Konfiguration in Vercel:**
+
+1.  **Framework Preset**: Next.js
+2.  **Root Directory**: `apps/web`
+3.  **Build & Development Settings**:
+    - **Install Command**: `cd ../.. && pnpm install`
+    - **Build Command**: `pnpm build`
+    - **Development Command**: `pnpm dev`
+4.  **Environment Variables**: Kopieren Sie die Umgebungsvariablen aus Ihrer `.env.local`-Datei in die Vercel-Projekteinstellungen.
+
 ## Lizenz
 
 MIT
