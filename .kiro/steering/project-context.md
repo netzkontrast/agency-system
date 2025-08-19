@@ -58,10 +58,13 @@ The Kohärenz Protokoll is an authoring software for structured knowledge proces
 - **Utility Functions**: Implement external integrations as utilities, not built-ins
 
 ### Code Quality Standards
-- **Minimal Code**: Write only the absolute minimal code needed
+- **Minimal Code**: Write only the absolute minimal code needed to address requirements
 - **No Exception Handling in Utilities**: Let Node retry mechanisms handle failures
-- **Logging**: Add comprehensive logging for debugging
+- **Comprehensive Logging**: Add structured logging for debugging and monitoring
 - **Idempotent Operations**: Ensure operations can be safely repeated
+- **Test-Driven Development**: Write tests before implementation where appropriate
+- **Documentation**: Maintain clear documentation for all public interfaces
+- **Type Safety**: Use TypeScript for frontend and proper typing in Python
 
 ## File Structure Conventions
 
@@ -88,10 +91,18 @@ The Kohärenz Protokoll is an authoring software for structured knowledge proces
 
 ## Quality Assurance Requirements
 
+### Content Processing
 - **Citations**: Every mid-answer must have ≥1 citation
 - **Question Limits**: Max 3 questions per span
 - **Deduplication**: Use clustering to avoid duplicates
 - **Spoiler Gate**: Chapter/beat restrictions before retrieval
+
+### Code Quality
+- **Test Coverage**: Maintain high test coverage for critical paths
+- **Code Review**: All changes require review before merging
+- **Performance**: Monitor and optimize for response times and resource usage
+- **Security**: Follow security best practices for API endpoints and data handling
+- **Accessibility**: Ensure UI components meet accessibility standards
 
 ## Environment Configuration
 
@@ -109,11 +120,29 @@ The Kohärenz Protokoll is an authoring software for structured knowledge proces
 
 ## Development Workflow
 
-1. **Requirements**: Define user-centric problem statements
-2. **Flow Design**: Create high-level workflow with mermaid diagrams
-3. **Utilities**: Implement necessary external integrations
-4. **Data Design**: Design shared store structure
-5. **Node Design**: Plan node interactions and data flow
-6. **Implementation**: Build nodes and flows
-7. **Optimization**: Iterate on design and implementation
-8. **Reliability**: Add comprehensive testing and error handling
+1. **Requirements**: Define user-centric problem statements using EARS format
+2. **Design**: Create comprehensive design documents with architecture diagrams
+3. **Task Planning**: Break down implementation into discrete, testable tasks
+4. **Flow Design**: Create high-level workflow with mermaid diagrams
+5. **Utilities**: Implement necessary external integrations
+6. **Data Design**: Design shared store structure
+7. **Node Design**: Plan node interactions and data flow
+8. **Implementation**: Build nodes and flows incrementally
+9. **Testing**: Write comprehensive tests for all components
+10. **Optimization**: Iterate on design and implementation
+11. **Reliability**: Add comprehensive error handling and monitoring
+
+## Spec-Driven Development
+
+The project follows a structured spec-driven development approach:
+
+### Spec Structure
+- **Requirements Document**: User stories with EARS acceptance criteria
+- **Design Document**: Architecture, components, data models, testing strategy
+- **Task List**: Discrete coding tasks with requirement references
+
+### Spec Workflow
+1. **Requirements Phase**: Define and refine user stories and acceptance criteria
+2. **Design Phase**: Create comprehensive technical design based on requirements
+3. **Task Phase**: Break design into implementable coding tasks
+4. **Execution Phase**: Implement tasks incrementally with testing

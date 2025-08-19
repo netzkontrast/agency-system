@@ -24,14 +24,17 @@ When starting any new feature or significant change:
    #### Acceptance Criteria
    1. WHEN [event] THEN [system] SHALL [response]
    2. IF [precondition] THEN [system] SHALL [response]
+   3. WHILE [condition] THE [system] SHALL [behavior]
    ```
 
 2. **Requirements Review Checklist**
    - [ ] All user stories follow the standard format
-   - [ ] Acceptance criteria use EARS format
-   - [ ] Edge cases are considered
-   - [ ] Success criteria are measurable
-   - [ ] Requirements are testable
+   - [ ] Acceptance criteria use EARS format (Easy Approach to Requirements Syntax)
+   - [ ] Edge cases and error conditions are considered
+   - [ ] Success criteria are measurable and testable
+   - [ ] Requirements are atomic and independent
+   - [ ] Non-functional requirements are specified (performance, security, etc.)
+   - [ ] Dependencies on other features are identified
 
 ### Phase 2: Design Document Creation
 After requirements approval:
@@ -76,26 +79,60 @@ After requirements approval:
 After design approval:
 
 1. **Task Breakdown Principles**
-   - Each task should be completable in 1-2 hours
-   - Tasks should build incrementally
-   - No orphaned code - everything integrates
-   - Focus only on coding tasks
-   - Reference specific requirements
+   - Each task should be completable in 1-2 hours maximum
+   - Tasks should build incrementally on previous work
+   - No orphaned code - everything must integrate
+   - Focus exclusively on coding tasks (no deployment, user testing, etc.)
+   - Reference specific requirements from the requirements document
+   - Include test creation as part of implementation tasks
 
 2. **Task Format**
    ```markdown
    - [ ] 1. Task Description
-     - Specific implementation details
-     - Files to create/modify
+     - Specific implementation details and objectives
+     - Files to create/modify with clear specifications
+     - Testing requirements and acceptance criteria
      - _Requirements: 1.1, 2.3_
    ```
 
 3. **Implementation Checklist**
-   - [ ] All tasks are coding-focused
-   - [ ] Each task references requirements
-   - [ ] Tasks follow logical sequence
-   - [ ] No deployment or user testing tasks
-   - [ ] Test-driven development where appropriate
+   - [ ] All tasks are coding-focused and executable by a development agent
+   - [ ] Each task references specific requirements (not just user stories)
+   - [ ] Tasks follow logical sequence with clear dependencies
+   - [ ] No deployment, user testing, or non-coding tasks included
+   - [ ] Test-driven development approach where appropriate
+   - [ ] Each task has clear success criteria
+   - [ ] Tasks are scoped to avoid big jumps in complexity
+
+### Phase 4: Task Execution
+When implementing tasks from approved specs:
+
+1. **Pre-Execution Requirements**
+   - [ ] Requirements document exists and is current
+   - [ ] Design document exists and addresses all requirements
+   - [ ] Task list is approved and up-to-date
+   - [ ] Development environment is properly configured
+
+2. **Execution Principles**
+   - **One Task at a Time**: Focus on a single task until completion
+   - **Requirements Alignment**: Verify implementation against specific requirements
+   - **Incremental Progress**: Build on previous tasks, no isolated components
+   - **Test Integration**: Include testing as part of task completion
+   - **Documentation Updates**: Update relevant documentation during implementation
+
+3. **Task Completion Criteria**
+   - [ ] All acceptance criteria from the task are met
+   - [ ] Code follows established patterns and conventions
+   - [ ] Tests are written and passing
+   - [ ] Integration with existing code is verified
+   - [ ] Documentation is updated if needed
+   - [ ] No breaking changes without explicit approval
+
+4. **Post-Task Review**
+   - Stop and allow review before proceeding to next task
+   - Verify task completion against requirements
+   - Update task status appropriately
+   - Gather feedback before continuing
 
 ## Code Review and Quality Standards
 
