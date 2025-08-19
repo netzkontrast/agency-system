@@ -42,18 +42,37 @@ flow = Flow(start=node_a)
 
 ### Shared Store Design
 ```python
+# Hierarchical organization for complex workflows
 shared = {
     "input": {
         "content": "text to process",
-        "metadata": {"source": "file.txt"}
+        "metadata": {
+            "source": "file.txt",
+            "chapter": "chapter_1",
+            "beat": "opening",
+            "timestamp": "2024-01-01T00:00:00Z"
+        }
     },
     "processing": {
-        "chunks": [],
-        "embeddings": []
+        "spans": [],
+        "questions": [],
+        "answers": [],
+        "embeddings": [],
+        "citations": []
     },
     "output": {
         "results": [],
-        "summary": ""
+        "summary": "",
+        "metrics": {
+            "processing_time": 0,
+            "spans_created": 0,
+            "questions_generated": 0
+        }
+    },
+    "context": {
+        "persona_id": None,
+        "user_preferences": {},
+        "session_data": {}
     }
 }
 ```
@@ -295,9 +314,11 @@ class ParallelNode(ParallelNode):
 
 ## Logging and Debugging
 
-### Add Logging to Nodes
+### Structured Logging for Nodes
 ```python
 import logging
+import time
+from typing import Any, Dict
 
 class LoggedNode(Node):
     def __init__(self):
@@ -305,14 +326,57 @@ class LoggedNode(Node):
         self.logger = logging.getLogger(self.__class__.__name__)
     
     def prep(self, shared):
-        self.logger.info("Starting preparation")
+        start_time = time.time()
+        self.logger.info("Starting preparation", extra={
+            "node": self.__class__.__name__,
+            "phase": "prep",
+            "shared_keys": list(shared.keys())
+        })
+        
         result = shared["input"]
-        self.logger.debug(f"Prepared data: {result}")
+        
+        self.logger.debug("Preparation completed", extra={
+            "node": self.__class__.__name__,
+            "phase": "prep",
+            "prep_time": time.time() - start_time,
+            "result_type": type(result).__name__,
+            "result_size": len(str(result)) if result else 0
+        })
+        
         return result
     
     def exec(self, prep_res):
-        self.logger.info("Executing main logic")
+        start_time = time.time()
+        self.logger.info("Starting execution", extra={
+            "node": self.__class__.__name__,
+            "phase": "exec"
+        })
+        
         result = process_data(prep_res)
-        self.logger.info(f"Execution completed, result length: {len(result)}")
+        
+        self.logger.info("Execution completed", extra={
+            "node": self.__class__.__name__,
+            "phase": "exec",
+            "exec_time": time.time() - start_time,
+            "result_length": len(result) if hasattr(result, '__len__') else 1
+        })
+        
         return result
+    
+    def post(self, shared, prep_res, exec_res):
+        self.logger.info("Post-processing", extra={
+            "node": self.__class__.__name__,
+            "phase": "post",
+            "shared_keys_before": list(shared.keys())
+        })
+        
+        shared["output_key"] = exec_res
+        
+        self.logger.debug("Post-processing completed", extra={
+            "node": self.__class__.__name__,
+            "phase": "post",
+            "shared_keys_after": list(shared.keys())
+        })
+        
+        return "default"
 ```

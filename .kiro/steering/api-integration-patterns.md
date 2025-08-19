@@ -9,20 +9,49 @@ fileMatchPattern: "apps/web/**/*.{ts,tsx,js,jsx}"
 
 ### Standard API Response Format
 ```typescript
-// Successful response
+// Successful response with comprehensive metadata
 return NextResponse.json({
+  success: true,
   message: "Operation completed successfully",
   data: result,
   metadata: {
     timestamp: new Date().toISOString(),
-    processingTime: Date.now() - startTime
+    processingTime: Date.now() - startTime,
+    version: "1.0",
+    requestId: crypto.randomUUID()
   }
 });
 
-// Error response
+// Error response with detailed error information
 return NextResponse.json(
-  { error: "Descriptive error message" },
+  { 
+    success: false,
+    error: "Descriptive error message",
+    code: "VALIDATION_ERROR",
+    details: validationErrors,
+    metadata: {
+      timestamp: new Date().toISOString(),
+      requestId: crypto.randomUUID()
+    }
+  },
   { status: 400 }
+);
+
+// Streaming response for long-running operations
+return new Response(
+  new ReadableStream({
+    start(controller) {
+      // Stream processing updates
+      controller.enqueue(`data: ${JSON.stringify({ status: "processing" })}\n\n`);
+    }
+  }),
+  {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    }
+  }
 );
 ```
 
@@ -474,43 +503,115 @@ export function QueryInterface() {
 
 ## Error Handling and Validation
 
-### Input Validation
+### Comprehensive Input Validation
 ```typescript
 import { z } from 'zod';
+import { NextRequest, NextResponse } from 'next/server';
 
-const IngestSchema = z.object({
-  content: z.string().min(1, "Content is required"),
-  metadata: z.object({
-    source: z.string().min(1, "Source is required"),
-    chapter: z.string().optional(),
-    beat: z.string().optional()
-  })
+// Define comprehensive schemas
+const MetadataSchema = z.object({
+  source: z.string().min(1, "Source is required"),
+  chapter: z.string().optional(),
+  beat: z.string().optional(),
+  timestamp: z.string().datetime().optional(),
+  tags: z.array(z.string()).optional(),
+  persona_id: z.string().uuid().optional()
 });
 
-export async function POST(request: NextRequest) {
+const IngestSchema = z.object({
+  content: z.string().min(1, "Content is required").max(50000, "Content too large"),
+  metadata: MetadataSchema,
+  options: z.object({
+    generate_qa: z.boolean().default(true),
+    chunk_size: z.number().min(100).max(2000).default(500),
+    overlap: z.number().min(0).max(500).default(50)
+  }).optional()
+});
+
+// Validation middleware
+async function validateRequest<T>(
+  request: NextRequest, 
+  schema: z.ZodSchema<T>
+): Promise<{ success: true; data: T } | { success: false; response: NextResponse }> {
   try {
     const body = await request.json();
-    const validatedData = IngestSchema.parse(body);
+    const validatedData = schema.parse(body);
+    return { success: true, data: validatedData };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        response: NextResponse.json(
+          { 
+            success: false,
+            error: "Validation failed", 
+            code: "VALIDATION_ERROR",
+            details: error.errors.map(err => ({
+              field: err.path.join('.'),
+              message: err.message,
+              received: err.received
+            }))
+          },
+          { status: 400 }
+        )
+      };
+    }
+    
+    return {
+      success: false,
+      response: NextResponse.json(
+        { 
+          success: false,
+          error: "Invalid request format",
+          code: "PARSE_ERROR"
+        },
+        { status: 400 }
+      )
+    };
+  }
+}
+
+// Usage in API route
+export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+  
+  try {
+    // Validate request
+    const validation = await validateRequest(request, IngestSchema);
+    if (!validation.success) {
+      return validation.response;
+    }
+    
+    const { content, metadata, options } = validation.data;
     
     // Process validated data
-    const result = await processIngest(validatedData);
+    const result = await processIngest(content, metadata, options);
     
     return NextResponse.json({
+      success: true,
       message: "Content ingested successfully",
-      data: result
+      data: result,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        processingTime: Date.now() - startTime,
+        requestId
+      }
     });
     
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
-        { status: 400 }
-      );
-    }
+    console.error('Ingest error:', error, { requestId });
     
-    console.error('Ingest error:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        success: false,
+        error: "Internal server error",
+        code: "INTERNAL_ERROR",
+        metadata: {
+          timestamp: new Date().toISOString(),
+          requestId
+        }
+      },
       { status: 500 }
     );
   }

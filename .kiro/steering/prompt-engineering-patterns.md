@@ -8,10 +8,22 @@ fileMatchPattern: "**/*.{py,ts,tsx,js,jsx}"
 ## Core Prompt Design Principles
 
 ### Structured Prompt Templates
-Always use structured prompts with clear sections:
+Always use structured prompts with clear sections and consistent formatting:
 
 ```python
-def create_structured_prompt(context: str, task: str, examples: list = None) -> str:
+from typing import List, Dict, Optional
+import json
+
+def create_structured_prompt(
+    task: str, 
+    context: str, 
+    examples: Optional[List[str]] = None,
+    constraints: Optional[List[str]] = None,
+    output_format: Optional[str] = None
+) -> str:
+    """
+    Create a well-structured prompt with consistent formatting
+    """
     prompt_parts = [
         "# Task",
         task,
@@ -21,6 +33,13 @@ def create_structured_prompt(context: str, task: str, examples: list = None) -> 
         ""
     ]
     
+    if constraints:
+        prompt_parts.extend([
+            "# Constraints",
+            *[f"- {constraint}" for constraint in constraints],
+            ""
+        ])
+    
     if examples:
         prompt_parts.extend([
             "# Examples",
@@ -28,16 +47,89 @@ def create_structured_prompt(context: str, task: str, examples: list = None) -> 
             ""
         ])
     
+    if output_format:
+        prompt_parts.extend([
+            "# Output Format",
+            output_format,
+            ""
+        ])
+    
     prompt_parts.extend([
         "# Instructions",
-        "- Be precise and concise",
-        "- Follow the specified format",
-        "- If uncertain, ask for clarification",
+        "- Be precise and accurate",
+        "- Follow the specified format exactly",
+        "- Base responses on provided context only",
+        "- If information is missing, indicate clearly",
         "",
         "# Response:"
     ])
     
     return "\n".join(prompt_parts)
+
+# Advanced prompt builder for complex scenarios
+class PromptBuilder:
+    def __init__(self):
+        self.sections = {}
+        self.order = []
+    
+    def add_section(self, name: str, content: str, priority: int = 1):
+        self.sections[name] = {
+            'content': content,
+            'priority': priority
+        }
+        if name not in self.order:
+            self.order.append(name)
+    
+    def build(self, max_tokens: int = 4000) -> str:
+        # Sort sections by priority
+        sorted_sections = sorted(
+            self.sections.items(),
+            key=lambda x: x[1]['priority']
+        )
+        
+        prompt_parts = []
+        token_count = 0
+        
+        for name, section in sorted_sections:
+            section_text = f"# {name.title()}\n{section['content']}\n"
+            section_tokens = len(section_text.split())
+            
+            if token_count + section_tokens <= max_tokens:
+                prompt_parts.append(section_text)
+                token_count += section_tokens
+            else:
+                # Try to fit a truncated version
+                remaining_tokens = max_tokens - token_count - 50  # Buffer
+                if remaining_tokens > 100:
+                    truncated = self.truncate_content(section['content'], remaining_tokens)
+                    prompt_parts.append(f"# {name.title()}\n{truncated}\n")
+                break
+        
+        return "\n".join(prompt_parts)
+    
+    def truncate_content(self, content: str, max_tokens: int) -> str:
+        words = content.split()
+        if len(words) <= max_tokens:
+            return content
+        
+        # Try to preserve complete sentences
+        sentences = content.split('. ')
+        truncated_sentences = []
+        token_count = 0
+        
+        for sentence in sentences:
+            sentence_tokens = len(sentence.split())
+            if token_count + sentence_tokens <= max_tokens:
+                truncated_sentences.append(sentence)
+                token_count += sentence_tokens
+            else:
+                break
+        
+        result = '. '.join(truncated_sentences)
+        if not result.endswith('.'):
+            result += '.'
+        
+        return result + "\n\n[Content truncated due to length...]"
 ```
 
 ### Context Window Management
