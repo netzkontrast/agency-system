@@ -1,0 +1,45 @@
+{
+  "sources": {
+    "vectors": {
+      "size": 1536,
+      "distance": "Cosine"
+    },
+    "hnsw_config": {
+      "m": 16,
+      "ef_construct": 100
+    },
+    "optimizers_config": {
+      "memmap_threshold": 20000
+    }
+  },
+  "thoughts_q": {
+    "vectors": {
+      "size": 1536,
+      "distance": "Cosine"
+    },
+    "hnsw_config": {
+      "m": 16,
+      "ef_construct": 100
+    }
+  },
+  "thoughts_a": {
+    "vectors": {
+      "size": 1536,
+      "distance": "Cosine"
+    },
+    "hnsw_config": {
+      "m": 16,
+      "ef_construct": 100
+    }
+  },
+  "persona_thoughts": {
+    "vectors": {
+      "size": 1536,
+      "distance": "Cosine"
+    },
+    "hnsw_config": {
+      "m": 16,
+      "ef_construct": 100
+    }
+  }
+}

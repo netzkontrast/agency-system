@@ -1,0 +1,11 @@
+{
+  "name": "@kohaerenz/flows",
+  "version": "0.1.0",
+  "main": "src/index.py",
+  "scripts": {
+    "test": "python -m pytest"
+  },
+  "dependencies": {
+    "pocketflow": "^1.0.4"
+  }
+}
