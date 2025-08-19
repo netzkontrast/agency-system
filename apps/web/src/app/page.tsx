@@ -1,19 +1,34 @@
 'use client';
 
-import { useState } from 'react';
 import ChatInterface from './chat/page';
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/components/ui/resizable';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Kohärenz Protokoll</h1>
-        <p className="text-gray-600 mb-8">Guide-Chat Interface für strukturierte Interaktion</p>
-        
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <ChatInterface />
-        </div>
-      </div>
+    <main className="min-h-screen bg-background">
+      <ResizablePanelGroup direction="horizontal" className="min-h-screen">
+        <ResizablePanel defaultSize={33}>
+          <div className="p-6 h-full">
+            <ChatInterface />
+          </div>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={34}>
+          <div className="flex h-full items-center justify-center p-6">
+            <span className="font-semibold">Editor / Diff</span>
+          </div>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={33}>
+          <div className="flex h-full items-center justify-center p-6">
+            <span className="font-semibold">Kontext / Tags</span>
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </main>
   );
 }

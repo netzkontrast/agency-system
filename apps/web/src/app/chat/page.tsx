@@ -1,6 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 interface Message {
   id: string;
@@ -41,7 +46,6 @@ export default function ChatInterface() {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
-    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -54,13 +58,8 @@ export default function ChatInterface() {
     setIsLoading(true);
 
     try {
-      // In a real implementation, this would call the API
-      // For now, we'll simulate a response
-      
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Add assistant response
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -70,26 +69,10 @@ export default function ChatInterface() {
 
       setMessages(prev => [...prev, assistantMessage]);
       
-      // Add some suggested actions (NBAs)
       setSuggestedActions([
-        {
-          id: 'nba1',
-          label: 'Mehr Details',
-          action: 'elaborate',
-          description: 'Fordern Sie detailliertere Informationen zu diesem Thema an'
-        },
-        {
-          id: 'nba2',
-          label: 'Verwandte Fragen',
-          action: 'related',
-          description: 'Finden Sie verwandte Fragen im Protokoll'
-        },
-        {
-          id: 'nba3',
-          label: 'Quellen anzeigen',
-          action: 'sources',
-          description: 'Zeigen Sie die zugrundeliegenden Quellen an'
-        }
+        { id: 'nba1', label: 'Mehr Details', action: 'elaborate', description: 'Fordern Sie detailliertere Informationen zu diesem Thema an' },
+        { id: 'nba2', label: 'Verwandte Fragen', action: 'related', description: 'Finden Sie verwandte Fragen im Protokoll' },
+        { id: 'nba3', label: 'Quellen anzeigen', action: 'sources', description: 'Zeigen Sie die zugrundeliegenden Quellen an' }
       ]);
     } catch (error) {
       console.error('Error sending message:', error);
@@ -106,7 +89,6 @@ export default function ChatInterface() {
   };
 
   const handleNBAAction = (nba: NBA) => {
-    // Handle Natural Behavioral Action
     const actionMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -116,8 +98,6 @@ export default function ChatInterface() {
     
     setMessages(prev => [...prev, actionMessage]);
     setSuggestedActions([]);
-    
-    // In a real implementation, this would trigger the corresponding flow
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -128,67 +108,88 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-[600px]">
-      <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+    <Card className="h-full flex flex-col">
+      <CardHeader>
+        <CardTitle>Guide-Chat</CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-y-auto space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`p-4 rounded-lg ${
-              message.role === 'user'
-                ? 'bg-blue-100 ml-10'
-                : 'bg-gray-100 mr-10'
+            className={`flex items-start gap-4 ${
+              message.role === 'user' ? 'justify-end' : ''
             }`}
           >
-            <div className="font-semibold text-sm text-gray-500 mb-1">
-              {message.role === 'user' ? 'Sie' : 'Assistent'}
+            {message.role === 'assistant' && (
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>A</AvatarFallback>
+              </Avatar>
+            )}
+            <div
+              className={`p-3 rounded-lg max-w-[75%] ${
+                message.role === 'user'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted'
+              }`}
+            >
+              <p className="text-sm">{message.content}</p>
             </div>
-            <div className="text-gray-800">{message.content}</div>
+            {message.role === 'user' && (
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>S</AvatarFallback>
+              </Avatar>
+            )}
           </div>
         ))}
         {isLoading && (
-          <div className="bg-gray-100 mr-10 p-4 rounded-lg">
-            <div className="font-semibold text-sm text-gray-500 mb-1">Assistent</div>
-            <div className="text-gray-800">Tippen...</div>
+          <div className="flex items-start gap-4">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>A</AvatarFallback>
+            </Avatar>
+            <div className="p-3 rounded-lg bg-muted">
+              <p className="text-sm">Tippen...</p>
+            </div>
           </div>
         )}
         <div ref={messagesEndRef} />
-      </div>
+      </CardContent>
 
       {suggestedActions.length > 0 && (
-        <div className="mb-4 p-4 bg-yellow-50 rounded-lg">
-          <h3 className="font-semibold text-yellow-800 mb-2">Vorgeschlagene Aktionen:</h3>
+        <CardFooter className="flex flex-col items-start gap-2 border-t pt-4">
+          <h3 className="font-semibold text-sm text-foreground mb-2">Vorgeschlagene Aktionen:</h3>
           <div className="flex flex-wrap gap-2">
             {suggestedActions.map((nba) => (
-              <button
+              <Button
                 key={nba.id}
                 onClick={() => handleNBAAction(nba)}
-                className="px-3 py-1 bg-yellow-200 hover:bg-yellow-300 text-yellow-800 rounded-full text-sm transition-colors"
+                variant="outline"
+                size="sm"
               >
                 {nba.label}
-              </button>
+              </Button>
             ))}
           </div>
-        </div>
+        </CardFooter>
       )}
 
-      <div className="flex">
-        <textarea
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Stellen Sie eine Frage oder beschreiben Sie Ihr Anliegen..."
-          className="flex-1 border border-gray-300 rounded-l-lg p-3 resize-none"
-          rows={3}
-          disabled={isLoading}
-        />
-        <button
-          onClick={handleSendMessage}
-          disabled={isLoading || !inputValue.trim()}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Senden
-        </button>
-      </div>
-    </div>
+      <CardFooter className="border-t pt-4">
+        <div className="flex w-full items-center space-x-2">
+          <Input
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Stellen Sie eine Frage..."
+            className="flex-1"
+            disabled={isLoading}
+          />
+          <Button
+            onClick={handleSendMessage}
+            disabled={isLoading || !inputValue.trim()}
+          >
+            Senden
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
   );
 }

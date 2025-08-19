@@ -1,19 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 4% 5%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 4% 5%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 4% 5%;
+
+    --primary: 56 50% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 13% 91%;
+    --secondary-foreground: 240 4% 5%;
+
+    --muted: 220 13% 94%;
+    --muted-foreground: 240 4% 45%;
+
+    --accent: 220 13% 91%;
+    --accent-foreground: 240 4% 5%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 17% 90%;
+    --input: 220 17% 90%;
+    --ring: 56 50% 42%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 4% 5%;
+    --foreground: 0 0% 100%;
+
+    --card: 240 4% 5%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 240 4% 5%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 56 50% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 13% 18%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 13% 18%;
+    --muted-foreground: 0 0% 63%;
+
+    --accent: 220 13% 18%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 27%;
+    --input: 220 13% 27%;
+    --ring: 56 50% 42%;
+  }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
 }
