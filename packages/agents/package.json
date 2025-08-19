@@ -1,0 +1,11 @@
+{
+  "name": "@kohaerenz/agents",
+  "version": "0.1.0",
+  "main": "src/index.py",
+  "scripts": {
+    "test": "python -m pytest"
+  },
+  "dependencies": {
+    "pocketflow": "^0.0.3"
+  }
+}
