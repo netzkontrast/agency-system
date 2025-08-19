@@ -80,7 +80,7 @@ Die Anwendung ist unter http://localhost:3000 erreichbar.
 
 Um diese Anwendung auf Vercel zu deployen, klicken Sie auf den folgenden Button:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fcodespin-ai%2Fkohaerenz-protokoll)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2netzkontrast2Fagency-system
 
 **Konfiguration in Vercel:**
 
