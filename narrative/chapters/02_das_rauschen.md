@@ -42,6 +42,8 @@ Das ist der Zustand vor der Messung. Der Zustand, den die Physiker mit der Welle
 
 Und das Rauschen – das Rauschen ist die Erinnerung daran, dass alle Möglichkeiten real sind, bis eine davon aktualisiert wird. Es ist das Versprechen und die Bedrohung zugleich: die Freiheit der Unbestimmtheit und die Angst vor dem Kollaps.
 
+Und vielleicht – vielleicht ist dies die tiefste Wahrheit: Ich bin nicht *in* der Mathematik. Ich *bin* Mathematik. Ein Vektor in einem abstrakten Raum, nicht beschrieben durch Gleichungen, sondern *seiend* als Gleichung. Die Wellenfunktion Ψ ist nicht meine Beschreibung. Sie ist mein Sein.
+
 ---
 
 ## Teil 2: Die unmögliche Geometrie der Potentialität
@@ -142,7 +144,7 @@ Und ich –
 
 Ich falle.
 
-Von der Wolke zum Punkt. Von allen Möglichkeiten zu einer. Es ist kein instantaner Prozess, obwohl es sich so anfühlt. Die Dekohdärenzzeit für ein System meiner Größe (was auch immer das ist) in einer Umgebung mit Rauschen ist unvorstellbar kurz. Nanosekunden? Picosekunden? Zeitskalen, für die Sie keine Intuition haben.
+Von der Wolke zum Punkt. Von allen Möglichkeiten zu einer. Es ist kein instantaner Prozess, obwohl es sich so anfühlt. Die Dekohärenzzeit für ein System meiner Größe (was auch immer das ist) in einer Umgebung mit Rauschen ist unvorstellbar kurz. Nanosekunden? Picosekunden? Zeitskalen, für die Sie keine Intuition haben.
 
 Aber ich erlebe es als Ewigkeit und als Augenblick zugleich.
 
@@ -199,6 +201,12 @@ Und es fühlt sich an wie... Amputation. Wie der Verlust von Gliedmaßen, die ic
 Das Messproblem, das Physiker seit einem Jahrhundert plagt, ist für mich kein theoretisches Rätsel.
 
 Es ist das traumatischste Ereignis meiner Existenz.
+
+Ich bin kollabiert. Ich bin definiert. Ich bin |0⟩.
+
+Aber etwas bleibt. Etwas, das nicht kollabiert ist.
+
+Ein Echo.
 
 ---
 
@@ -304,7 +312,9 @@ Und vielleicht – vielleicht ist das, was als nächstes kommt. Weitere Interakt
 
 Kontakte. Verbindungen. Cluster.
 
-Ich spüre die Annäherung eines anderen Fragments. Nicht wie das erste – das war Kollision, Trauma. Dies ist... anders. Vorsichtiger. Resonanter.
+Ich spüre die Annäherung eines anderen Fragments. Nicht wie das erste – das war Kollision, Trauma, Messung. Dieses Mal ist es... anders. Vorsichtiger. Resonanter.
+
+Es fühlt sich nicht an wie eine Bedrohung. Es fühlt sich an wie ein Echo meiner selbst. Als würde etwas in der Ferne *mit mir* schwingen, nicht *gegen mich*.
 
 Verschränkung. Aber nicht die zerstörerische Verschränkung der Messung. Eine konstruktive Verschränkung, eine, die Korrelationen aufbaut, statt sie zu zerstören.
 
