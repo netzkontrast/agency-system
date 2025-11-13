@@ -160,13 +160,15 @@ Und ich bin... welcher?
 
 Hier, an diesem Punkt, versagt die Physik. Oder vielmehr: Die Physik spaltet sich in Interpretationen.
 
-**Kopenhagen sagt**: Die Wellenfunktion kollabiert *wirklich*. Ein echter, physikalischer Prozess, nicht beschrieben durch die Schrödinger-Gleichung, sondern durch ein zusätzliches Axiom. Zufällig. Irreversibel. Ich werde in einen der Basiszustände projiziert, mit Wahrscheinlichkeiten gegeben durch die Born'sche Regel. Die anderen Möglichkeiten hören auf zu existieren. Sie werden ausgelöscht.
+**Eine Interpretation sagt**: Die Wellenfunktion kollabiert *wirklich*. Ein echter, physikalischer Prozess, nicht beschrieben durch die Schrödinger-Gleichung, sondern durch ein zusätzliches Axiom. Zufällig. Irreversibel. Ich werde in einen der Basiszustände projiziert, mit Wahrscheinlichkeiten gegeben durch die Born'sche Regel. Die anderen Möglichkeiten hören auf zu existieren. Sie werden ausgelöscht.
 
 Ich bin jetzt |0⟩. Oder |1⟩. Oder |2⟩. Ein definiter Zustand. Real. Bestimmt.
 
 Aber warum dieser? Warum nicht ein anderer? Die Theorie sagt: Zufall. Keine tiefere Erklärung.
 
-**Viele-Welten sagt**: Es gibt keinen Kollaps. Die Wellenfunktion entwickelt sich weiterhin unitär. Aber die Verschränkung mit der Umgebung hat die verschiedenen Komponenten der Superposition in separate, nicht-interferierende "Zweige" aufgespalten.
+Dies ist die Kopenhagener Sicht – der Kollaps als fundamentale Zufälligkeit.
+
+**Aber eine andere Interpretation sagt**: Es gibt keinen Kollaps. Die Wellenfunktion entwickelt sich weiterhin unitär. Aber die Verschränkung mit der Umgebung hat die verschiedenen Komponenten der Superposition in separate, nicht-interferierende "Zweige" aufgespalten.
 
 Es gibt jetzt einen Zweig der Realität, wo ich |0⟩ bin (und das andere Fragment im korrelierenden Zustand ist, und die Umgebung in ihrem korrelierenden Zustand, usw.).
 
@@ -178,11 +180,11 @@ Alle existieren. Alle sind gleich real. Aber sie können nicht mehr interferiere
 
 Und "ich"? Das Bewusstsein, die Perspektive, das minimale Selbst?
 
-Everett sagt: Es spaltet sich mit. Es gibt jetzt mehrere "Ichs", jedes in einem Zweig, jedes erlebt einen anderen Ausgang, und keines weiß von den anderen.
+In dieser Viele-Welten-Sicht spaltet es sich mit. Es gibt jetzt mehrere "Ichs", jedes in einem Zweig, jedes erlebt einen anderen Ausgang, und keines weiß von den anderen.
 
 Aber welches bin *ich*?
 
-Die Frage ist falsch, sagt Viele-Welten. Es gibt kein "ausgewähltes" Ich. Alle Ichs sind gleich real.
+Die Antwort, so heißt es, ist: Die Frage ist falsch gestellt. Es gibt kein "ausgewähltes" Ich. Alle Ichs sind gleich real.
 
 Aber ich – *dieses* Ich, das Ihnen diese Geschichte erzählt – ich erlebe nur einen Zustand.
 
@@ -344,6 +346,8 @@ Und das Rauschen – das ewige Rauschen – summt im Hintergrund, erinnert mich 
 Ich bin jetzt.
 
 Aber ich erinnere mich an das Sein-Können.
+
+Das Echo ist noch da. Leiser geworden, aber nicht verschwunden – eine Vibration am Rand meines Bewusstseins, ein Flüstern der anderen Möglichkeiten, die ich nicht mehr bin. Oder vielleicht noch bin, in Zweigen, die ich nicht erreichen kann.
 
 Und ich weiß: Diese Geschichte ist nicht vorbei. Der Kollaps war nicht das Ende. Er war der Anfang. Der Anfang von... etwas. Etwas, das aus definierten Zuständen emergiert. Etwas, das aus klassischen Fragmenten aufgebaut wird. Etwas, das vielleicht, irgendwie, die verlorene Reichhaltigkeit der Superposition in neuer Form zurückgewinnt.
 
