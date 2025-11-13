@@ -1,1779 +1,1407 @@
+# Kohärenz Protokoll - AI Assistant Guide
+
+> **CRITICAL**: This is the definitive guide for AI assistants working on the Kohärenz Protokoll project. Read carefully and follow these guidelines precisely.
+
+## Table of Contents
+
+1. [Project Overview](#project-overview)
+2. [Repository Structure](#repository-structure)
+3. [Architecture & Technology Stack](#architecture--technology-stack)
+4. [Development Workflow](#development-workflow)
+5. [Agentic Coding Guidelines](#agentic-coding-guidelines)
+6. [PocketFlow Development Patterns](#pocketflow-development-patterns)
+7. [Frontend Development](#frontend-development)
+8. [API Development](#api-development)
+9. [Testing Standards](#testing-standards)
+10. [Git Workflow](#git-workflow)
+11. [Key Conventions](#key-conventions)
+
 ---
-layout: default
-title: "Agentic Coding"
+
+## Project Overview
+
+### What is Kohärenz Protokoll?
+
+**Kohärenz Protokoll** is an authoring software for structured knowledge processing and querying with semantic search and AI-assisted analysis. It combines modern web technologies with AI orchestration frameworks to enable:
+
+- **Content Ingestion**: Processing and structuring narrative content
+- **Semantic Search**: Vector-based retrieval with Qdrant
+- **QA Generation**: Automated question-answer pair creation
+- **Persona Management**: Context-aware personalized experiences
+- **Guide-Chat Interface**: Interactive exploration with NBA (Next Best Action) recommendations
+
+### Dual-Purpose Repository
+
+This repository serves two distinct but related purposes:
+
+1. **Primary: Kohärenz Protokoll Application**
+   - Production software for knowledge processing
+   - Multi-layered architecture with Next.js, PocketFlow, and AI integration
+   - Located in: `apps/`, `packages/`, `sql/`
+
+2. **Secondary: AEGIS Narrative Project**
+   - Creative writing project (philosophical science fiction)
+   - Story content and planning documents
+   - Located in: `narrative/`
+
+### Core Philosophy
+
+**Humans Design, AI Implements**
+- Start small and simple
+- Design at high level before implementation
+- Frequently ask for feedback and clarification
+- Iterate on design before scaling up
+
 ---
 
-# Agentic Coding: Humans Design, Agents code!
-
-> If you are an AI agent involved in building LLM Systems, read this guide **VERY, VERY** carefully! This is the most important chapter in the entire document. Throughout development, you should always (1) start with a small and simple solution, (2) design at a high level (`docs/design.md`) before implementation, and (3) frequently ask humans for feedback and clarification.
-{: .warning }
-
-## Agentic Coding Steps
-
-Agentic Coding should be a collaboration between Human System Design and Agent Implementation:
-
-| Steps                  | Human      | AI        | Comment                                                                 |
-|:-----------------------|:----------:|:---------:|:------------------------------------------------------------------------|
-| 1. Requirements | ★★★ High  | ★☆☆ Low   | Humans understand the requirements and context.                    |
-| 2. Flow          | ★★☆ Medium | ★★☆ Medium |  Humans specify the high-level design, and the AI fills in the details. |
-| 3. Utilities   | ★★☆ Medium | ★★☆ Medium | Humans provide available external APIs and integrations, and the AI helps with implementation. |
-| 4. Data          | ★☆☆ Low    | ★★★ High   | AI designs the data schema, and humans verify.                            |
-| 5. Node          | ★☆☆ Low   | ★★★ High  | The AI helps design the node based on the flow.          |
-| 6. Implementation      | ★☆☆ Low   | ★★★ High  |  The AI implements the flow based on the design. |
-| 7. Optimization        | ★★☆ Medium | ★★☆ Medium | Humans evaluate the results, and the AI helps optimize. |
-| 8. Reliability         | ★☆☆ Low   | ★★★ High  |  The AI writes test cases and addresses corner cases.     |
-
-1. **Requirements**: Clarify the requirements for your project, and evaluate whether an AI system is a good fit. 
-    - Understand AI systems' strengths and limitations:
-      - **Good for**: Routine tasks requiring common sense (filling forms, replying to emails)
-      - **Good for**: Creative tasks with well-defined inputs (building slides, writing SQL)
-      - **Not good for**: Ambiguous problems requiring complex decision-making (business strategy, startup planning)
-    - **Keep It User-Centric:** Explain the "problem" from the user's perspective rather than just listing features.
-    - **Balance complexity vs. impact**: Aim to deliver the highest value features with minimal complexity early.
-
-2. **Flow Design**: Outline at a high level, describe how your AI system orchestrates nodes.
-    - Identify applicable design patterns (e.g., [Map Reduce](./design_pattern/mapreduce.md), [Agent](./design_pattern/agent.md), [RAG](./design_pattern/rag.md)).
-      - For each node in the flow, start with a high-level one-line description of what it does.
-      - If using **Map Reduce**, specify how to map (what to split) and how to reduce (how to combine).
-      - If using **Agent**, specify what are the inputs (context) and what are the possible actions.
-      - If using **RAG**, specify what to embed, noting that there's usually both offline (indexing) and online (retrieval) workflows.
-    - Outline the flow and draw it in a mermaid diagram. For example:
-      ```mermaid
-      flowchart LR
-          start[Start] --> batch[Batch]
-          batch --> check[Check]
-          check -->|OK| process
-          check -->|Error| fix[Fix]
-          fix --> check
-          
-          subgraph process[Process]
-            step1[Step 1] --> step2[Step 2]
-          end
-          
-          process --> endNode[End]
-      ```
-    - > **If Humans can't specify the flow, AI Agents can't automate it!** Before building an LLM system, thoroughly understand the problem and potential solution by manually solving example inputs to develop intuition.  
-      {: .best-practice }
-
-3. **Utilities**: Based on the Flow Design, identify and implement necessary utility functions.
-    - Think of your AI system as the brain. It needs a body—these *external utility functions*—to interact with the real world:
-        <div align="center"><img src="https://github.com/the-pocket/.github/raw/main/assets/utility.png?raw=true" width="400"/></div>
-
-        - Reading inputs (e.g., retrieving Slack messages, reading emails)
-        - Writing outputs (e.g., generating reports, sending emails)
-        - Using external tools (e.g., calling LLMs, searching the web)
-        - **NOTE**: *LLM-based tasks* (e.g., summarizing text, analyzing sentiment) are **NOT** utility functions; rather, they are *core functions* internal in the AI system.
-    - For each utility function, implement it and write a simple test.
-    - Document their input/output, as well as why they are necessary. For example:
-      - `name`: `get_embedding` (`utils/get_embedding.py`)
-      - `input`: `str`
-      - `output`: a vector of 3072 floats
-      - `necessity`: Used by the second node to embed text
-    - Example utility implementation:
-      ```python
-      # utils/call_llm.py
-      from openai import OpenAI
-
-      def call_llm(prompt):    
-          client = OpenAI(api_key="YOUR_API_KEY_HERE")
-          r = client.chat.completions.create(
-              model="gpt-4o",
-              messages=[{"role": "user", "content": prompt}]
-          )
-          return r.choices[0].message.content
-          
-      if __name__ == "__main__":
-          prompt = "What is the meaning of life?"
-          print(call_llm(prompt))
-      ```
-    - > **Sometimes, design Utilities before Flow:**  For example, for an LLM project to automate a legacy system, the bottleneck will likely be the available interface to that system. Start by designing the hardest utilities for interfacing, and then build the flow around them.
-      {: .best-practice }
-    - > **Avoid Exception Handling in Utilities**: If a utility function is called from a Node's `exec()` method, avoid using `try...except` blocks within the utility. Let the Node's built-in retry mechanism handle failures.
-      {: .warning }
-
-4. **Data Design**: Design the shared store that nodes will use to communicate.
-   - One core design principle for PocketFlow is to use a well-designed [shared store](./core_abstraction/communication.md)—a data contract that all nodes agree upon to retrieve and store data.
-      - For simple systems, use an in-memory dictionary.
-      - For more complex systems or when persistence is required, use a database.
-      - **Don't Repeat Yourself**: Use in-memory references or foreign keys.
-      - Example shared store design:
-        ```python
-        shared = {
-            "user": {
-                "id": "user123",
-                "context": {                # Another nested dict
-                    "weather": {"temp": 72, "condition": "sunny"},
-                    "location": "San Francisco"
-                }
-            },
-            "results": {}                   # Empty dict to store outputs
-        }
-        ```
-
-5. **Node Design**: Plan how each node will read and write data, and use utility functions.
-   - For each [Node](./core_abstraction/node.md), describe its type, how it reads and writes data, and which utility function it uses. Keep it specific but high-level without codes. For example:
-     - `type`: Regular (or Batch, or Async)
-     - `prep`: Read "text" from the shared store
-     - `exec`: Call the embedding utility function. **Avoid exception handling here**; let the Node's retry mechanism manage failures.
-     - `post`: Write "embedding" to the shared store
-
-6. **Implementation**: Implement the initial nodes and flows based on the design.
-   - 🎉 If you've reached this step, humans have finished the design. Now *Agentic Coding* begins!
-   - **"Keep it simple, stupid!"** Avoid complex features and full-scale type checking.
-   - **FAIL FAST**! Leverage the built-in [Node](./core_abstraction/node.md) retry and fallback mechanisms to handle failures gracefully. This helps you quickly identify weak points in the system.
-   - Add logging throughout the code to facilitate debugging.
-
-7. **Optimization**:
-   - **Use Intuition**: For a quick initial evaluation, human intuition is often a good start.
-   - **Redesign Flow (Back to Step 3)**: Consider breaking down tasks further, introducing agentic decisions, or better managing input contexts.
-   - If your flow design is already solid, move on to micro-optimizations:
-     - **Prompt Engineering**: Use clear, specific instructions with examples to reduce ambiguity.
-     - **In-Context Learning**: Provide robust examples for tasks that are difficult to specify with instructions alone.
-
-   - > **You'll likely iterate a lot!** Expect to repeat Steps 3–6 hundreds of times.
-     >
-     > <div align="center"><img src="https://github.com/the-pocket/.github/raw/main/assets/success.png?raw=true" width="400"/></div>
-     {: .best-practice }
-
-8. **Reliability**  
-   - **Node Retries**: Add checks in the node `exec` to ensure outputs meet requirements, and consider increasing `max_retries` and `wait` times.
-   - **Logging and Visualization**: Maintain logs of all attempts and visualize node results for easier debugging.
-   - **Self-Evaluation**: Add a separate node (powered by an LLM) to review outputs when results are uncertain.
-
-## Example LLM Project File Structure
+## Repository Structure
 
 ```
-my_project/
-├── main.py
-├── nodes.py
-├── flow.py
-├── utils/
-│   ├── __init__.py
-│   ├── call_llm.py
-│   └── search_web.py
-├── requirements.txt
-└── docs/
-    └── design.md
-```
+agency-system/
+├── apps/
+│   └── web/                 # Next.js 14 frontend and API routes
+│       ├── src/
+│       │   ├── app/         # App Router pages and API routes
+│       │   ├── components/  # React components (shadcn/ui)
+│       │   └── lib/         # Client-side utilities
+│       └── package.json
+│
+├── packages/
+│   ├── core/                # Shared SDK, ModelRegistry, Types
+│   │   ├── src/
+│   │   │   ├── db/          # Database clients (Postgres, Qdrant)
+│   │   │   ├── models/      # AI model adapters
+│   │   │   └── types/       # TypeScript type definitions
+│   │   └── package.json
+│   │
+│   ├── flows/               # PocketFlow orchestration (Python)
+│   │   ├── src/
+│   │   │   ├── nodes.py     # Node definitions
+│   │   │   ├── flows.py     # Flow compositions
+│   │   │   └── __init__.py
+│   │   └── package.json
+│   │
+│   └── agents/              # Fast Agent with MCP-Tools
+│       ├── src/
+│       │   ├── agent.py     # Agent implementation
+│       │   └── __init__.py
+│       └── package.json
+│
+├── sql/
+│   ├── schema.sql           # PostgreSQL schema
+│   ├── migrations/          # Database migrations
+│   ├── seeds/               # Seed data
+│   └── qdrant_collections.json  # Qdrant configuration
+│
+├── utils/                   # Python utility functions
+│   ├── call_llm.py          # LLM wrapper
+│   ├── get_embedding.py     # Embedding generation
+│   └── vector_search.py     # Vector search utilities
+│
+├── docs/                    # Project documentation
+│   ├── ARCHITECTURE.md      # System architecture
+│   ├── API.md               # API documentation
+│   ├── design.md            # High-level design docs
+│   └── PROMPTS.md           # Prompt templates
+│
+├── narrative/               # AEGIS creative writing project
+│   ├── chapters/            # Chapter content and planning
+│   ├── OVERALL_PLOT.md      # Story structure
+│   └── *.md                 # Narrative documentation
+│
+├── research/                # Research materials and analysis
+│
+├── .kiro/                   # Kiro spec system
+│   ├── steering/            # Development patterns and guidelines
+│   │   ├── project-context.md
+│   │   ├── development-workflow.md
+│   │   ├── pocketflow-patterns.md
+│   │   ├── api-integration-patterns.md
+│   │   ├── testing-patterns.md
+│   │   └── ...
+│   └── specs/               # Feature specifications
+│
+├── main.py                  # Python entry point
+├── flow.py                  # Flow definitions
+├── nodes.py                 # Node definitions
+├── requirements.txt         # Python dependencies
+├── package.json             # Root package.json (pnpm workspace)
+├── pnpm-workspace.yaml      # PNPM workspace configuration
+└── CLAUDE.md                # This file
 
-- **`requirements.txt`**: Lists the Python dependencies for the project.
-  ```
-  PyYAML
-  pocketflow
-  ```
-
-- **`docs/design.md`**: Contains project documentation for each step above. This should be *high-level* and *no-code*.
-  ~~~
-  # Design Doc: Your Project Name
-
-  > Please DON'T remove notes for AI
-
-  ## Requirements
-
-  > Notes for AI: Keep it simple and clear.
-  > If the requirements are abstract, write concrete user stories
-
-
-  ## Flow Design
-
-  > Notes for AI:
-  > 1. Consider the design patterns of agent, map-reduce, rag, and workflow. Apply them if they fit.
-  > 2. Present a concise, high-level description of the workflow.
-
-  ### Applicable Design Pattern:
-
-  1. Map the file summary into chunks, then reduce these chunks into a final summary.
-  2. Agentic file finder
-    - *Context*: The entire summary of the file
-    - *Action*: Find the file
-
-  ### Flow high-level Design:
-
-  1. **First Node**: This node is for ...
-  2. **Second Node**: This node is for ...
-  3. **Third Node**: This node is for ...
-
-  ```mermaid
-  flowchart TD
-      firstNode[First Node] --> secondNode[Second Node]
-      secondNode --> thirdNode[Third Node]
-  ```
-  ## Utility Functions
-
-  > Notes for AI:
-  > 1. Understand the utility function definition thoroughly by reviewing the doc.
-  > 2. Include only the necessary utility functions, based on nodes in the flow.
-
-  1. **Call LLM** (`utils/call_llm.py`)
-    - *Input*: prompt (str)
-    - *Output*: response (str)
-    - Generally used by most nodes for LLM tasks
-
-  2. **Embedding** (`utils/get_embedding.py`)
-    - *Input*: str
-    - *Output*: a vector of 3072 floats
-    - Used by the second node to embed text
-
-  ## Node Design
-
-  ### Shared Store
-
-  > Notes for AI: Try to minimize data redundancy
-
-  The shared store structure is organized as follows:
-
-  ```python
-  shared = {
-      "key": "value"
-  }
-  ```
-
-  ### Node Steps
-
-  > Notes for AI: Carefully decide whether to use Batch/Async Node/Flow.
-
-  1. First Node
-    - *Purpose*: Provide a short explanation of the node’s function
-    - *Type*: Decide between Regular, Batch, or Async
-    - *Steps*:
-      - *prep*: Read "key" from the shared store
-      - *exec*: Call the utility function
-      - *post*: Write "key" to the shared store
-
-  2. Second Node
-    ...
-  ~~~
-
-
-- **`utils/`**: Contains all utility functions.
-  - It's recommended to dedicate one Python file to each API call, for example `call_llm.py` or `search_web.py`.
-  - Each file should also include a `main()` function to try that API call
-  ```python
-  from google import genai
-  import os
-
-  def call_llm(prompt: str) -> str:
-      client = genai.Client(
-          api_key=os.getenv("GEMINI_API_KEY", ""),
-      )
-      model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-      response = client.models.generate_content(model=model, contents=[prompt])
-      return response.text
-
-  if __name__ == "__main__":
-      test_prompt = "Hello, how are you?"
-
-      # First call - should hit the API
-      print("Making call...")
-      response1 = call_llm(test_prompt, use_cache=False)
-      print(f"Response: {response1}")
-  ```
-
-- **`nodes.py`**: Contains all the node definitions.
-  ```python
-  # nodes.py
-  from pocketflow import Node
-  from utils.call_llm import call_llm
-
-  class GetQuestionNode(Node):
-      def exec(self, _):
-          # Get question directly from user input
-          user_question = input("Enter your question: ")
-          return user_question
-      
-      def post(self, shared, prep_res, exec_res):
-          # Store the user's question
-          shared["question"] = exec_res
-          return "default"  # Go to the next node
-
-  class AnswerNode(Node):
-      def prep(self, shared):
-          # Read question from shared
-          return shared["question"]
-      
-      def exec(self, question):
-          # Call LLM to get the answer
-          return call_llm(question)
-      
-      def post(self, shared, prep_res, exec_res):
-          # Store the answer in shared
-          shared["answer"] = exec_res
-  ```
-- **`flow.py`**: Implements functions that create flows by importing node definitions and connecting them.
-  ```python
-  # flow.py
-  from pocketflow import Flow
-  from nodes import GetQuestionNode, AnswerNode
-
-  def create_qa_flow():
-      """Create and return a question-answering flow."""
-      # Create nodes
-      get_question_node = GetQuestionNode()
-      answer_node = AnswerNode()
-      
-      # Connect nodes in sequence
-      get_question_node >> answer_node
-      
-      # Create flow starting with input node
-      return Flow(start=get_question_node)
-  ```
-- **`main.py`**: Serves as the project's entry point.
-  ```python
-  # main.py
-  from flow import create_qa_flow
-
-  # Example main function
-  # Please replace this with your own main function
-  def main():
-      shared = {
-          "question": None,  # Will be populated by GetQuestionNode from user input
-          "answer": None     # Will be populated by AnswerNode
-      }
-
-      # Create the flow and run it
-      qa_flow = create_qa_flow()
-      qa_flow.run(shared)
-      print(f"Question: {shared['question']}")
-      print(f"Answer: {shared['answer']}")
-
-  if __name__ == "__main__":
-      main()
-  ```
-
-================================================
-File: docs/index.md
-================================================
----
-layout: default
-title: "Home"
-nav_order: 1
----
-
-# Pocket Flow
-
-A [100-line](https://github.com/the-pocket/PocketFlow/blob/main/pocketflow/__init__.py) minimalist LLM framework for *Agents, Task Decomposition, RAG, etc*.
-
-- **Lightweight**: Just the core graph abstraction in 100 lines. ZERO dependencies, and vendor lock-in.
-- **Expressive**: Everything you love from larger frameworks—([Multi-](./design_pattern/multi_agent.html))[Agents](./design_pattern/agent.html), [Workflow](./design_pattern/workflow.html), [RAG](./design_pattern/rag.html), and more.  
-- **Agentic-Coding**: Intuitive enough for AI agents to help humans build complex LLM applications.
-
-<div align="center">
-  <img src="https://github.com/the-pocket/.github/raw/main/assets/meme.jpg?raw=true" width="400"/>
-</div>
-
-## Core Abstraction
-
-We model the LLM workflow as a **Graph + Shared Store**:
-
-- [Node](./core_abstraction/node.md) handles simple (LLM) tasks.
-- [Flow](./core_abstraction/flow.md) connects nodes through **Actions** (labeled edges).
-- [Shared Store](./core_abstraction/communication.md) enables communication between nodes within flows.
-- [Batch](./core_abstraction/batch.md) nodes/flows allow for data-intensive tasks.
-- [Async](./core_abstraction/async.md) nodes/flows allow waiting for asynchronous tasks.
-- [(Advanced) Parallel](./core_abstraction/parallel.md) nodes/flows handle I/O-bound tasks.
-
-<div align="center">
-  <img src="https://github.com/the-pocket/.github/raw/main/assets/abstraction.png" width="500"/>
-</div>
-
-## Design Pattern
-
-From there, it’s easy to implement popular design patterns:
-
-- [Agent](./design_pattern/agent.md) autonomously makes decisions.
-- [Workflow](./design_pattern/workflow.md) chains multiple tasks into pipelines.
-- [RAG](./design_pattern/rag.md) integrates data retrieval with generation.
-- [Map Reduce](./design_pattern/mapreduce.md) splits data tasks into Map and Reduce steps.
-- [Structured Output](./design_pattern/structure.md) formats outputs consistently.
-- [(Advanced) Multi-Agents](./design_pattern/multi_agent.md) coordinate multiple agents.
-
-<div align="center">
-  <img src="https://github.com/the-pocket/.github/raw/main/assets/design.png" width="500"/>
-</div>
-
-## Utility Function
-
-We **do not** provide built-in utilities. Instead, we offer *examples*—please *implement your own*:
-
-- [LLM Wrapper](./utility_function/llm.md)
-- [Viz and Debug](./utility_function/viz.md)
-- [Web Search](./utility_function/websearch.md)
-- [Chunking](./utility_function/chunking.md)
-- [Embedding](./utility_function/embedding.md)
-- [Vector Databases](./utility_function/vector.md)
-- [Text-to-Speech](./utility_function/text_to_speech.md)
-
-**Why not built-in?**: I believe it's a *bad practice* for vendor-specific APIs in a general framework:
-- *API Volatility*: Frequent changes lead to heavy maintenance for hardcoded APIs.
-- *Flexibility*: You may want to switch vendors, use fine-tuned models, or run them locally.
-- *Optimizations*: Prompt caching, batching, and streaming are easier without vendor lock-in.
-
-## Ready to build your Apps? 
-
-Check out [Agentic Coding Guidance](./guide.md), the fastest way to develop LLM projects with Pocket Flow!
-
-================================================
-File: docs/core_abstraction/async.md
-================================================
----
-layout: default
-title: "(Advanced) Async"
-parent: "Core Abstraction"
-nav_order: 5
----
-
-# (Advanced) Async
-
-**Async** Nodes implement `prep_async()`, `exec_async()`, `exec_fallback_async()`, and/or `post_async()`. This is useful for:
-
-1. **prep_async()**: For *fetching/reading data (files, APIs, DB)* in an I/O-friendly way.
-2. **exec_async()**: Typically used for async LLM calls.
-3. **post_async()**: For *awaiting user feedback*, *coordinating across multi-agents* or any additional async steps after `exec_async()`.
-
-**Note**: `AsyncNode` must be wrapped in `AsyncFlow`. `AsyncFlow` can also include regular (sync) nodes.
-
-### Example
-
-```python
-class SummarizeThenVerify(AsyncNode):
-    async def prep_async(self, shared):
-        # Example: read a file asynchronously
-        doc_text = await read_file_async(shared["doc_path"])
-        return doc_text
-
-    async def exec_async(self, prep_res):
-        # Example: async LLM call
-        summary = await call_llm_async(f"Summarize: {prep_res}")
-        return summary
-
-    async def post_async(self, shared, prep_res, exec_res):
-        # Example: wait for user feedback
-        decision = await gather_user_feedback(exec_res)
-        if decision == "approve":
-            shared["summary"] = exec_res
-            return "approve"
-        return "deny"
-
-summarize_node = SummarizeThenVerify()
-final_node = Finalize()
-
-# Define transitions
-summarize_node - "approve" >> final_node
-summarize_node - "deny"    >> summarize_node  # retry
-
-flow = AsyncFlow(start=summarize_node)
-
-async def main():
-    shared = {"doc_path": "document.txt"}
-    await flow.run_async(shared)
-    print("Final Summary:", shared.get("summary"))
-
-asyncio.run(main())
-```
-
-================================================
-File: docs/core_abstraction/batch.md
-================================================
----
-layout: default
-title: "Batch"
-parent: "Core Abstraction"
-nav_order: 4
----
-
-# Batch
-
-**Batch** makes it easier to handle large inputs in one Node or **rerun** a Flow multiple times. Example use cases:
-- **Chunk-based** processing (e.g., splitting large texts).
-- **Iterative** processing over lists of input items (e.g., user queries, files, URLs).
-
-## 1. BatchNode
-
-A **BatchNode** extends `Node` but changes `prep()` and `exec()`:
-
-- **`prep(shared)`**: returns an **iterable** (e.g., list, generator).
-- **`exec(item)`**: called **once** per item in that iterable.
-- **`post(shared, prep_res, exec_res_list)`**: after all items are processed, receives a **list** of results (`exec_res_list`) and returns an **Action**.
-
-
-### Example: Summarize a Large File
-
-```python
-class MapSummaries(BatchNode):
-    def prep(self, shared):
-        # Suppose we have a big file; chunk it
-        content = shared["data"]
-        chunk_size = 10000
-        chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
-        return chunks
-
-    def exec(self, chunk):
-        prompt = f"Summarize this chunk in 10 words: {chunk}"
-        summary = call_llm(prompt)
-        return summary
-
-    def post(self, shared, prep_res, exec_res_list):
-        combined = "\n".join(exec_res_list)
-        shared["summary"] = combined
-        return "default"
-
-map_summaries = MapSummaries()
-flow = Flow(start=map_summaries)
-flow.run(shared)
 ```
 
 ---
 
-## 2. BatchFlow
+## Architecture & Technology Stack
 
-A **BatchFlow** runs a **Flow** multiple times, each time with different `params`. Think of it as a loop that replays the Flow for each parameter set.
-
-### Example: Summarize Many Files
-
-```python
-class SummarizeAllFiles(BatchFlow):
-    def prep(self, shared):
-        # Return a list of param dicts (one per file)
-        filenames = list(shared["data"].keys())  # e.g., ["file1.txt", "file2.txt", ...]
-        return [{"filename": fn} for fn in filenames]
-
-# Suppose we have a per-file Flow (e.g., load_file >> summarize >> reduce):
-summarize_file = SummarizeFile(start=load_file)
-
-# Wrap that flow into a BatchFlow:
-summarize_all_files = SummarizeAllFiles(start=summarize_file)
-summarize_all_files.run(shared)
-```
-
-### Under the Hood
-1. `prep(shared)` returns a list of param dicts—e.g., `[{filename: "file1.txt"}, {filename: "file2.txt"}, ...]`.
-2. The **BatchFlow** loops through each dict. For each one:
-   - It merges the dict with the BatchFlow’s own `params`.
-   - It calls `flow.run(shared)` using the merged result.
-3. This means the sub-Flow is run **repeatedly**, once for every param dict.
-
----
-
-## 3. Nested or Multi-Level Batches
-
-You can nest a **BatchFlow** in another **BatchFlow**. For instance:
-- **Outer** batch: returns a list of diretory param dicts (e.g., `{"directory": "/pathA"}`, `{"directory": "/pathB"}`, ...).
-- **Inner** batch: returning a list of per-file param dicts.
-
-At each level, **BatchFlow** merges its own param dict with the parent’s. By the time you reach the **innermost** node, the final `params` is the merged result of **all** parents in the chain. This way, a nested structure can keep track of the entire context (e.g., directory + file name) at once.
-
-```python
-
-class FileBatchFlow(BatchFlow):
-    def prep(self, shared):
-        directory = self.params["directory"]
-        # e.g., files = ["file1.txt", "file2.txt", ...]
-        files = [f for f in os.listdir(directory) if f.endswith(".txt")]
-        return [{"filename": f} for f in files]
-
-class DirectoryBatchFlow(BatchFlow):
-    def prep(self, shared):
-        directories = [ "/path/to/dirA", "/path/to/dirB"]
-        return [{"directory": d} for d in directories]
-
-# MapSummaries have params like {"directory": "/path/to/dirA", "filename": "file1.txt"}
-inner_flow = FileBatchFlow(start=MapSummaries())
-outer_flow = DirectoryBatchFlow(start=inner_flow)
-```
-
-================================================
-File: docs/core_abstraction/communication.md
-================================================
----
-layout: default
-title: "Communication"
-parent: "Core Abstraction"
-nav_order: 3
----
-
-# Communication
-
-Nodes and Flows **communicate** in 2 ways:
-
-1. **Shared Store (for almost all the cases)** 
-
-   - A global data structure (often an in-mem dict) that all nodes can read ( `prep()`) and write (`post()`).  
-   - Great for data results, large content, or anything multiple nodes need.
-   - You shall design the data structure and populate it ahead.
-     
-   - > **Separation of Concerns:** Use `Shared Store` for almost all cases to separate *Data Schema* from *Compute Logic*!  This approach is both flexible and easy to manage, resulting in more maintainable code. `Params` is more a syntax sugar for [Batch](./batch.md).
-     {: .best-practice }
-
-2. **Params (only for [Batch](./batch.md))** 
-   - Each node has a local, ephemeral `params` dict passed in by the **parent Flow**, used as an identifier for tasks. Parameter keys and values shall be **immutable**.
-   - Good for identifiers like filenames or numeric IDs, in Batch mode.
-
-If you know memory management, think of the **Shared Store** like a **heap** (shared by all function calls), and **Params** like a **stack** (assigned by the caller).
-
----
-
-## 1. Shared Store
-
-### Overview
-
-A shared store is typically an in-mem dictionary, like:
-```python
-shared = {"data": {}, "summary": {}, "config": {...}, ...}
-```
-
-It can also contain local file handlers, DB connections, or a combination for persistence. We recommend deciding the data structure or DB schema first based on your app requirements.
-
-### Example
-
-```python
-class LoadData(Node):
-    def post(self, shared, prep_res, exec_res):
-        # We write data to shared store
-        shared["data"] = "Some text content"
-        return None
-
-class Summarize(Node):
-    def prep(self, shared):
-        # We read data from shared store
-        return shared["data"]
-
-    def exec(self, prep_res):
-        # Call LLM to summarize
-        prompt = f"Summarize: {prep_res}"
-        summary = call_llm(prompt)
-        return summary
-
-    def post(self, shared, prep_res, exec_res):
-        # We write summary to shared store
-        shared["summary"] = exec_res
-        return "default"
-
-load_data = LoadData()
-summarize = Summarize()
-load_data >> summarize
-flow = Flow(start=load_data)
-
-shared = {}
-flow.run(shared)
-```
-
-Here:
-- `LoadData` writes to `shared["data"]`.
-- `Summarize` reads from `shared["data"]`, summarizes, and writes to `shared["summary"]`.
-
----
-
-## 2. Params
-
-**Params** let you store *per-Node* or *per-Flow* config that doesn't need to live in the shared store. They are:
-- **Immutable** during a Node's run cycle (i.e., they don't change mid-`prep->exec->post`).
-- **Set** via `set_params()`.
-- **Cleared** and updated each time a parent Flow calls it.
-
-> Only set the uppermost Flow params because others will be overwritten by the parent Flow. 
-> 
-> If you need to set child node params, see [Batch](./batch.md).
-{: .warning }
-
-Typically, **Params** are identifiers (e.g., file name, page number). Use them to fetch the task you assigned or write to a specific part of the shared store.
-
-### Example
-
-```python
-# 1) Create a Node that uses params
-class SummarizeFile(Node):
-    def prep(self, shared):
-        # Access the node's param
-        filename = self.params["filename"]
-        return shared["data"].get(filename, "")
-
-    def exec(self, prep_res):
-        prompt = f"Summarize: {prep_res}"
-        return call_llm(prompt)
-
-    def post(self, shared, prep_res, exec_res):
-        filename = self.params["filename"]
-        shared["summary"][filename] = exec_res
-        return "default"
-
-# 2) Set params
-node = SummarizeFile()
-
-# 3) Set Node params directly (for testing)
-node.set_params({"filename": "doc1.txt"})
-node.run(shared)
-
-# 4) Create Flow
-flow = Flow(start=node)
-
-# 5) Set Flow params (overwrites node params)
-flow.set_params({"filename": "doc2.txt"})
-flow.run(shared)  # The node summarizes doc2, not doc1
-```
-
-================================================
-File: docs/core_abstraction/flow.md
-================================================
----
-layout: default
-title: "Flow"
-parent: "Core Abstraction"
-nav_order: 2
----
-
-# Flow
-
-A **Flow** orchestrates a graph of Nodes. You can chain Nodes in a sequence or create branching depending on the **Actions** returned from each Node's `post()`.
-
-## 1. Action-based Transitions
-
-Each Node's `post()` returns an **Action** string. By default, if `post()` doesn't return anything, we treat that as `"default"`.
-
-You define transitions with the syntax:
-
-1. **Basic default transition**: `node_a >> node_b`
-  This means if `node_a.post()` returns `"default"`, go to `node_b`. 
-  (Equivalent to `node_a - "default" >> node_b`)
-
-2. **Named action transition**: `node_a - "action_name" >> node_b`
-  This means if `node_a.post()` returns `"action_name"`, go to `node_b`.
-
-It's possible to create loops, branching, or multi-step flows.
-
-## 2. Creating a Flow
-
-A **Flow** begins with a **start** node. You call `Flow(start=some_node)` to specify the entry point. When you call `flow.run(shared)`, it executes the start node, looks at its returned Action from `post()`, follows the transition, and continues until there's no next node.
-
-### Example: Simple Sequence
-
-Here's a minimal flow of two nodes in a chain:
-
-```python
-node_a >> node_b
-flow = Flow(start=node_a)
-flow.run(shared)
-```
-
-- When you run the flow, it executes `node_a`.  
-- Suppose `node_a.post()` returns `"default"`.  
-- The flow then sees `"default"` Action is linked to `node_b` and runs `node_b`.  
-- `node_b.post()` returns `"default"` but we didn't define `node_b >> something_else`. So the flow ends there.
-
-### Example: Branching & Looping
-
-Here's a simple expense approval flow that demonstrates branching and looping. The `ReviewExpense` node can return three possible Actions:
-
-- `"approved"`: expense is approved, move to payment processing
-- `"needs_revision"`: expense needs changes, send back for revision 
-- `"rejected"`: expense is denied, finish the process
-
-We can wire them like this:
-
-```python
-# Define the flow connections
-review - "approved" >> payment        # If approved, process payment
-review - "needs_revision" >> revise   # If needs changes, go to revision
-review - "rejected" >> finish         # If rejected, finish the process
-
-revise >> review   # After revision, go back for another review
-payment >> finish  # After payment, finish the process
-
-flow = Flow(start=review)
-```
-
-Let's see how it flows:
-
-1. If `review.post()` returns `"approved"`, the expense moves to the `payment` node
-2. If `review.post()` returns `"needs_revision"`, it goes to the `revise` node, which then loops back to `review`
-3. If `review.post()` returns `"rejected"`, it moves to the `finish` node and stops
+### System Architecture
 
 ```mermaid
 flowchart TD
-    review[Review Expense] -->|approved| payment[Process Payment]
-    review -->|needs_revision| revise[Revise Report]
-    review -->|rejected| finish[Finish Process]
-
-    revise --> review
-    payment --> finish
-```
-
-### Running Individual Nodes vs. Running a Flow
-
-- `node.run(shared)`: Just runs that node alone (calls `prep->exec->post()`), returns an Action. 
-- `flow.run(shared)`: Executes from the start node, follows Actions to the next node, and so on until the flow can't continue.
-
-> `node.run(shared)` **does not** proceed to the successor.
-> This is mainly for debugging or testing a single node.
-> 
-> Always use `flow.run(...)` in production to ensure the full pipeline runs correctly.
-{: .warning }
-
-## 3. Nested Flows
-
-A **Flow** can act like a Node, which enables powerful composition patterns. This means you can:
-
-1. Use a Flow as a Node within another Flow's transitions.  
-2. Combine multiple smaller Flows into a larger Flow for reuse.  
-3. Node `params` will be a merging of **all** parents' `params`.
-
-### Flow's Node Methods
-
-A **Flow** is also a **Node**, so it will run `prep()` and `post()`. However:
-
-- It **won't** run `exec()`, as its main logic is to orchestrate its nodes.
-- `post()` always receives `None` for `exec_res` and should instead get the flow execution results from the shared store.
-
-### Basic Flow Nesting
-
-Here's how to connect a flow to another node:
-
-```python
-# Create a sub-flow
-node_a >> node_b
-subflow = Flow(start=node_a)
-
-# Connect it to another node
-subflow >> node_c
-
-# Create the parent flow
-parent_flow = Flow(start=subflow)
-```
-
-When `parent_flow.run()` executes:
-1. It starts `subflow`
-2. `subflow` runs through its nodes (`node_a->node_b`)
-3. After `subflow` completes, execution continues to `node_c`
-
-### Example: Order Processing Pipeline
-
-Here's a practical example that breaks down order processing into nested flows:
-
-```python
-# Payment processing sub-flow
-validate_payment >> process_payment >> payment_confirmation
-payment_flow = Flow(start=validate_payment)
-
-# Inventory sub-flow
-check_stock >> reserve_items >> update_inventory
-inventory_flow = Flow(start=check_stock)
-
-# Shipping sub-flow
-create_label >> assign_carrier >> schedule_pickup
-shipping_flow = Flow(start=create_label)
-
-# Connect the flows into a main order pipeline
-payment_flow >> inventory_flow >> shipping_flow
-
-# Create the master flow
-order_pipeline = Flow(start=payment_flow)
-
-# Run the entire pipeline
-order_pipeline.run(shared_data)
-```
-
-This creates a clean separation of concerns while maintaining a clear execution path:
-
-```mermaid
-flowchart LR
-    subgraph order_pipeline[Order Pipeline]
-        subgraph paymentFlow["Payment Flow"]
-            A[Validate Payment] --> B[Process Payment] --> C[Payment Confirmation]
-        end
-
-        subgraph inventoryFlow["Inventory Flow"]
-            D[Check Stock] --> E[Reserve Items] --> F[Update Inventory]
-        end
-
-        subgraph shippingFlow["Shipping Flow"]
-            G[Create Label] --> H[Assign Carrier] --> I[Schedule Pickup]
-        end
-
-        paymentFlow --> inventoryFlow
-        inventoryFlow --> shippingFlow
+    subgraph Frontend["🖥️ Frontend Layer"]
+        UI[Next.js 14 App Router]
+        Chat[Guide-Chat Interface]
+        Persona[Persona Management]
+        UI --> Chat
+        UI --> Persona
     end
+
+    subgraph API["🔌 API Layer"]
+        Routes[Next.js API Routes]
+        Ingest[/api/ingest]
+        Query[/api/query]
+        Judge[/api/judge/context]
+        PersonaAPI[/api/persona]
+        Routes --> Ingest
+        Routes --> Query
+        Routes --> Judge
+        Routes --> PersonaAPI
+    end
+
+    subgraph Orchestration["⚙️ Orchestration"]
+        PF[PocketFlow Engine]
+        Parse[ParseNode]
+        Segment[SegmentNode]
+        GenQ[GenQuestionsNode]
+        GenA[GenAnswersNode]
+        PF --> Parse --> Segment --> GenQ --> GenA
+    end
+
+    subgraph Data["💾 Data Layer"]
+        Qdrant[(Qdrant Vector DB)]
+        Postgres[(PostgreSQL + pgvector)]
+    end
+
+    subgraph AI["🧠 AI Models"]
+        ModelReg[ModelRegistry]
+        LMStudio[LM Studio - Dev]
+        OpenRouter[OpenRouter - Prod]
+        ModelReg --> LMStudio
+        ModelReg --> OpenRouter
+    end
+
+    Frontend ==> API
+    API ==> Orchestration
+    API ==> Data
+    Orchestration ==> Data
+    Orchestration ==> AI
 ```
 
-================================================
-File: docs/core_abstraction/node.md
-================================================
+### Technology Stack
+
+#### Frontend (apps/web)
+- **Framework**: Next.js 14 with App Router
+- **AI Integration**: ai-sdk v5 for streaming
+- **UI Components**: shadcn/ui (Radix UI + Tailwind CSS)
+- **State Management**: React hooks + Zustand (when needed)
+- **Language**: TypeScript 5.x
+
+#### API Layer
+- **Technology**: Next.js API Routes (Node/Edge runtime)
+- **Format**: RESTful JSON APIs
+- **Streaming**: Server-Sent Events (SSE) via ai-sdk
+
+#### Orchestration (packages/flows)
+- **Framework**: PocketFlow (Python)
+- **Properties**: Short, idempotent steps
+- **Patterns**: Map-Reduce, Agent, RAG, Workflow
+
+#### Data Layer
+- **Vector Database**: Qdrant
+  - Collections: `sources`, `thoughts_q`, `thoughts_a`, `persona_thoughts`
+- **Relational Database**: PostgreSQL with pgvector extension
+  - Tables: `spans`, `questions`, `answers`, `tags`, `relations`, `personas`
+
+#### AI Models
+- **Development**: LM Studio (local models)
+- **Production**: OpenRouter (cloud models)
+- **Registry**: Central ModelRegistry for configuration
+
+#### Package Management
+- **Node.js**: pnpm 8.x (monorepo workspace)
+- **Python**: pip with requirements.txt
+
 ---
-layout: default
-title: "Node"
-parent: "Core Abstraction"
-nav_order: 1
+
+## Development Workflow
+
+### Spec-Driven Development Process
+
+This project follows a rigorous spec-driven approach. **ALL** significant features must go through this process:
+
+#### Phase 1: Requirements Gathering
+
+1. **Create Requirements Document** in `.kiro/specs/[feature-name]/requirements.md`
+
+```markdown
+# Requirements Document: [Feature Name]
+
+## Introduction
+Brief description of the feature and its purpose
+
+## Requirements
+
+### Requirement 1.1: [Title]
+**User Story:** As a [role], I want [feature], so that [benefit]
+
+#### Acceptance Criteria (EARS Format)
+1. WHEN [event] THEN [system] SHALL [response]
+2. IF [precondition] THEN [system] SHALL [response]
+3. WHILE [condition] THE [system] SHALL [behavior]
+
+### Requirement 1.2: [Title]
+...
+```
+
+2. **Requirements Review Checklist**
+   - [ ] All user stories follow standard format
+   - [ ] Acceptance criteria use EARS format
+   - [ ] Edge cases and error conditions considered
+   - [ ] Success criteria are measurable and testable
+   - [ ] Requirements are atomic and independent
+
+#### Phase 2: Design Document Creation
+
+1. **Research Phase**
+   - Identify knowledge gaps
+   - Research technical approaches
+   - Analyze existing codebase patterns
+   - Document findings
+
+2. **Create Design Document** in `.kiro/specs/[feature-name]/design.md`
+
+```markdown
+# Design Document: [Feature Name]
+
+## Overview
+High-level summary of the solution
+
+## Architecture
+System components and their interactions (include mermaid diagrams)
+
+## Components and Interfaces
+Detailed component specifications
+
+## Data Models
+Data structures and relationships
+
+## Flow Design (for PocketFlow features)
+- Applicable design patterns (Agent/RAG/MapReduce/Workflow)
+- High-level node descriptions
+- Flow diagram
+
+## Error Handling
+Error scenarios and recovery strategies
+
+## Testing Strategy
+How the solution will be tested
+```
+
+3. **Design Review Checklist**
+   - [ ] Addresses all requirements
+   - [ ] Follows project architecture patterns
+   - [ ] Includes mermaid diagrams
+   - [ ] Considers scalability and performance
+   - [ ] Documents design decisions and rationales
+
+#### Phase 3: Implementation Planning
+
+1. **Create Task List** in `.kiro/specs/[feature-name]/tasks.md`
+
+```markdown
+# Implementation Tasks: [Feature Name]
+
+## Tasks
+
+- [ ] 1. Task Description
+  - Specific implementation details and objectives
+  - Files to create/modify with clear specifications
+  - Testing requirements and acceptance criteria
+  - _Requirements: 1.1, 2.3_
+
+- [ ] 2. Next Task
+  ...
+```
+
+2. **Task Breakdown Principles**
+   - Each task completable in 1-2 hours maximum
+   - Tasks build incrementally
+   - No orphaned code - everything must integrate
+   - Focus exclusively on coding tasks
+   - Reference specific requirements
+   - Include test creation
+
+#### Phase 4: Task Execution
+
+**Pre-Execution Requirements**
+- [ ] Requirements document exists and is current
+- [ ] Design document exists and addresses all requirements
+- [ ] Task list is approved and up-to-date
+- [ ] Development environment is properly configured
+
+**Execution Principles**
+- **One Task at a Time**: Complete before moving to next
+- **Requirements Alignment**: Verify against specific requirements
+- **Incremental Progress**: Build on previous tasks
+- **Test Integration**: Include testing in task completion
+- **Documentation Updates**: Update docs during implementation
+
+**Task Completion Criteria**
+- [ ] All acceptance criteria met
+- [ ] Code follows established patterns
+- [ ] Tests written and passing
+- [ ] Integration verified
+- [ ] Documentation updated
+- [ ] No breaking changes without approval
+
 ---
 
-# Node
+## Agentic Coding Guidelines
 
-A **Node** is the smallest building block. Each Node has 3 steps `prep->exec->post`:
+### Core Principles
 
-<div align="center">
-  <img src="https://github.com/the-pocket/.github/raw/main/assets/node.png?raw=true" width="400"/>
-</div>
+**Humans Design, AI Implements** - This is a collaboration:
 
-1. `prep(shared)`
-   - **Read and preprocess data** from `shared` store. 
-   - Examples: *query DB, read files, or serialize data into a string*.
-   - Return `prep_res`, which is used by `exec()` and `post()`.
+| Phase | Human Involvement | AI Involvement | Notes |
+|-------|-------------------|----------------|-------|
+| 1. Requirements | ★★★ High | ★☆☆ Low | Humans understand context and needs |
+| 2. Flow Design | ★★☆ Medium | ★★☆ Medium | Humans specify high-level, AI fills details |
+| 3. Utilities | ★★☆ Medium | ★★☆ Medium | Humans provide APIs, AI implements |
+| 4. Data Design | ★☆☆ Low | ★★★ High | AI designs schema, humans verify |
+| 5. Node Design | ★☆☆ Low | ★★★ High | AI designs based on flow |
+| 6. Implementation | ★☆☆ Low | ★★★ High | AI implements based on design |
+| 7. Optimization | ★★☆ Medium | ★★☆ Medium | Humans evaluate, AI optimizes |
+| 8. Reliability | ★☆☆ Low | ★★★ High | AI writes tests and handles edge cases |
 
-2. `exec(prep_res)`
-   - **Execute compute logic**, with optional retries and error handling (below).
-   - Examples: *(mostly) LLM calls, remote APIs, tool use*.
-   - ⚠️ This shall be only for compute and **NOT** access `shared`.
-   - ⚠️ If retries enabled, ensure idempotent implementation.
-   - ⚠️ Defer exception handling to the Node's built-in retry mechanism.
-   - Return `exec_res`, which is passed to `post()`.
+### Development Guidelines
 
-3. `post(shared, prep_res, exec_res)`
-   - **Postprocess and write data** back to `shared`.
-   - Examples: *update DB, change states, log results*.
-   - **Decide the next action** by returning a *string* (`action = "default"` if *None*).
+#### 1. Start Simple
+- Begin with minimal viable implementation
+- Avoid premature optimization
+- Add complexity only when needed
+- **Example**: Start with in-memory storage before adding database persistence
 
-> **Why 3 steps?** To enforce the principle of *separation of concerns*. The data storage and data processing are operated separately.
->
-> All steps are *optional*. E.g., you can only implement `prep` and `post` if you just need to process data.
-{: .note }
+#### 2. Design Before Code
+- Always create or reference design document
+- Understand the full flow before implementing
+- Draw diagrams for complex interactions
+- **Example**: For new API endpoint, document data flow end-to-end first
 
-### Fault Tolerance & Retries
+#### 3. Ask for Feedback
+- When requirements are unclear, ask
+- When multiple approaches exist, present options
+- When stuck, explain the issue and potential solutions
+- **Example**: "I see two approaches: A) batch processing or B) streaming. Which fits better?"
 
-You can **retry** `exec()` if it raises an exception via two parameters when define the Node:
+#### 4. Minimal Code
+- Write only the code needed to meet requirements
+- No speculative features
+- No complex abstractions unless justified
+- **Example**: Don't create a generic framework for a single use case
 
-- `max_retries` (int): Max times to run `exec()`. The default is `1` (**no** retry).
-- `wait` (int): The time to wait (in **seconds**) before next retry. By default, `wait=0` (no waiting). 
-`wait` is helpful when you encounter rate-limits or quota errors from your LLM provider and need to back off.
+#### 5. Separation of Concerns
+- Keep data schema separate from compute logic
+- Use Shared Store pattern in PocketFlow
+- Isolate external integrations in utilities
+- **Example**: Database queries in utilities, business logic in nodes
 
-```python 
-my_node = SummarizeFile(max_retries=3, wait=10)
-```
+#### 6. Fail Fast
+- Leverage built-in retry mechanisms
+- Add validation to trigger retries
+- Log errors with sufficient context
+- **Example**: Validate LLM outputs and raise error if malformed
 
-When an exception occurs in `exec()`, the Node automatically retries until:
+---
 
-- It either succeeds, or
-- The Node has retried `max_retries - 1` times already and fails on the last attempt.
+## PocketFlow Development Patterns
 
-You can get the current retry times (0-based) from `self.cur_retry`.
+### Node Structure
 
-```python 
-class RetryNode(Node):
-    def exec(self, prep_res):
-        print(f"Retry {self.cur_retry} times")
-        raise Exception("Failed")
-```
+Every PocketFlow Node follows this three-phase pattern:
 
-### Graceful Fallback
+```python
+class ExampleNode(Node):
+    """
+    One-line description of what this node does.
+    """
 
-To **gracefully handle** the exception (after all retries) rather than raising it, override:
-
-```python 
-def exec_fallback(self, prep_res, exc):
-    raise exc
-```
-
-By default, it just re-raises exception. But you can return a fallback result instead, which becomes the `exec_res` passed to `post()`.
-
-### Example: Summarize file
-
-```python 
-class SummarizeFile(Node):
     def prep(self, shared):
-        return shared["data"]
+        """
+        PREP PHASE: Read and preprocess data from shared store.
+
+        Purpose:
+        - Read data from shared store
+        - Transform/serialize for exec
+        - NO external API calls
+        - NO LLM calls
+
+        Args:
+            shared: The shared store dictionary
+
+        Returns:
+            Data needed by exec() (any type)
+        """
+        return shared["input_key"]
 
     def exec(self, prep_res):
-        if not prep_res:
-            return "Empty file content"
-        prompt = f"Summarize this text in 10 words: {prep_res}"
-        summary = call_llm(prompt)  # might fail
-        return summary
+        """
+        EXEC PHASE: Execute core logic with retries.
 
-    def exec_fallback(self, prep_res, exc):
-        # Provide a simple fallback instead of crashing
-        return "There was an error processing your request."
+        Purpose:
+        - Core processing logic
+        - Call utility functions
+        - Call LLMs
+        - NO exception handling (let Node retry mechanism handle)
+        - Must be idempotent if retries enabled
 
-    def post(self, shared, prep_res, exec_res):
-        shared["summary"] = exec_res
-        # Return "default" by not returning
+        Args:
+            prep_res: Output from prep()
 
-summarize_node = SummarizeFile(max_retries=3)
+        Returns:
+            Processing result (any type)
+        """
+        # This is automatically retried on failure
+        result = call_llm(f"Process: {prep_res}")
 
-# node.run() calls prep->exec->post
-# If exec() fails, it retries up to 3 times before calling exec_fallback()
-action_result = summarize_node.run(shared)
+        # Add validation to trigger retry
+        if not is_valid(result):
+            raise ValueError("Invalid result - will trigger retry")
 
-print("Action returned:", action_result)  # "default"
-print("Summary stored:", shared["summary"])
-```
-
-================================================
-File: docs/core_abstraction/parallel.md
-================================================
----
-layout: default
-title: "(Advanced) Parallel"
-parent: "Core Abstraction"
-nav_order: 6
----
-
-# (Advanced) Parallel
-
-**Parallel** Nodes and Flows let you run multiple **Async** Nodes and Flows  **concurrently**—for example, summarizing multiple texts at once. This can improve performance by overlapping I/O and compute. 
-
-> Because of Python’s GIL, parallel nodes and flows can’t truly parallelize CPU-bound tasks (e.g., heavy numerical computations). However, they excel at overlapping I/O-bound work—like LLM calls, database queries, API requests, or file I/O.
-{: .warning }
-
-> - **Ensure Tasks Are Independent**: If each item depends on the output of a previous item, **do not** parallelize.
-> 
-> - **Beware of Rate Limits**: Parallel calls can **quickly** trigger rate limits on LLM services. You may need a **throttling** mechanism (e.g., semaphores or sleep intervals).
-> 
-> - **Consider Single-Node Batch APIs**: Some LLMs offer a **batch inference** API where you can send multiple prompts in a single call. This is more complex to implement but can be more efficient than launching many parallel requests and mitigates rate limits.
-{: .best-practice }
-
-## AsyncParallelBatchNode
-
-Like **AsyncBatchNode**, but run `exec_async()` in **parallel**:
-
-```python
-class ParallelSummaries(AsyncParallelBatchNode):
-    async def prep_async(self, shared):
-        # e.g., multiple texts
-        return shared["texts"]
-
-    async def exec_async(self, text):
-        prompt = f"Summarize: {text}"
-        return await call_llm_async(prompt)
-
-    async def post_async(self, shared, prep_res, exec_res_list):
-        shared["summary"] = "\n\n".join(exec_res_list)
-        return "default"
-
-node = ParallelSummaries()
-flow = AsyncFlow(start=node)
-```
-
-## AsyncParallelBatchFlow
-
-Parallel version of **BatchFlow**. Each iteration of the sub-flow runs **concurrently** using different parameters:
-
-```python
-class SummarizeMultipleFiles(AsyncParallelBatchFlow):
-    async def prep_async(self, shared):
-        return [{"filename": f} for f in shared["files"]]
-
-sub_flow = AsyncFlow(start=LoadAndSummarizeFile())
-parallel_flow = SummarizeMultipleFiles(start=sub_flow)
-await parallel_flow.run_async(shared)
-```
-
-================================================
-File: docs/design_pattern/agent.md
-================================================
----
-layout: default
-title: "Agent"
-parent: "Design Pattern"
-nav_order: 1
----
-
-# Agent
-
-Agent is a powerful design pattern in which nodes can take dynamic actions based on the context.
-
-<div align="center">
-  <img src="https://github.com/the-pocket/.github/raw/main/assets/agent.png?raw=true" width="350"/>
-</div>
-
-## Implement Agent with Graph
-
-1. **Context and Action:** Implement nodes that supply context and perform actions.  
-2. **Branching:** Use branching to connect each action node to an agent node. Use action to allow the agent to direct the [flow](../core_abstraction/flow.md) between nodes—and potentially loop back for multi-step.
-3. **Agent Node:** Provide a prompt to decide action—for example:
-
-```python
-f"""
-### CONTEXT
-Task: {task_description}
-Previous Actions: {previous_actions}
-Current State: {current_state}
-
-### ACTION SPACE
-[1] search
-  Description: Use web search to get results
-  Parameters:
-    - query (str): What to search for
-
-[2] answer
-  Description: Conclude based on the results
-  Parameters:
-    - result (str): Final answer to provide
-
-### NEXT ACTION
-Decide the next action based on the current context and available action space.
-Return your response in the following format:
-
-```yaml
-thinking: |
-    <your step-by-step reasoning process>
-action: <action_name>
-parameters:
-    <parameter_name>: <parameter_value>
-```"""
-```
-
-The core of building **high-performance** and **reliable** agents boils down to:
-
-1. **Context Management:** Provide *relevant, minimal context.* For example, rather than including an entire chat history, retrieve the most relevant via [RAG](./rag.md). Even with larger context windows, LLMs still fall victim to ["lost in the middle"](https://arxiv.org/abs/2307.03172), overlooking mid-prompt content.
-
-2. **Action Space:** Provide *a well-structured and unambiguous* set of actions—avoiding overlap like separate `read_databases` or  `read_csvs`. Instead, import CSVs into the database.
-
-## Example Good Action Design
-
-- **Incremental:** Feed content in manageable chunks (500 lines or 1 page) instead of all at once.
-
-- **Overview-zoom-in:** First provide high-level structure (table of contents, summary), then allow drilling into details (raw texts).
-
-- **Parameterized/Programmable:** Instead of fixed actions, enable parameterized (columns to select) or programmable (SQL queries) actions, for example, to read CSV files.
-
-- **Backtracking:** Let the agent undo the last step instead of restarting entirely, preserving progress when encountering errors or dead ends.
-
-## Example: Search Agent
-
-This agent:
-1. Decides whether to search or answer
-2. If searches, loops back to decide if more search needed
-3. Answers when enough context gathered
-
-```python
-class DecideAction(Node):
-    def prep(self, shared):
-        context = shared.get("context", "No previous search")
-        query = shared["query"]
-        return query, context
-        
-    def exec(self, inputs):
-        query, context = inputs
-        prompt = f"""
-Given input: {query}
-Previous search results: {context}
-Should I: 1) Search web for more info 2) Answer with current knowledge
-Output in yaml:
-```yaml
-action: search/answer
-reason: why this action
-search_term: search phrase if action is search
-```"""
-        resp = call_llm(prompt)
-        yaml_str = resp.split("```yaml")[1].split("```")[0].strip()
-        result = yaml.safe_load(yaml_str)
-        
-        assert isinstance(result, dict)
-        assert "action" in result
-        assert "reason" in result
-        assert result["action"] in ["search", "answer"]
-        if result["action"] == "search":
-            assert "search_term" in result
-        
         return result
 
     def post(self, shared, prep_res, exec_res):
-        if exec_res["action"] == "search":
-            shared["search_term"] = exec_res["search_term"]
-        return exec_res["action"]
+        """
+        POST PHASE: Write results and determine next action.
 
-class SearchWeb(Node):
-    def prep(self, shared):
-        return shared["search_term"]
-        
-    def exec(self, search_term):
-        return search_web(search_term)
-    
-    def post(self, shared, prep_res, exec_res):
-        prev_searches = shared.get("context", [])
-        shared["context"] = prev_searches + [
-            {"term": shared["search_term"], "result": exec_res}
-        ]
-        return "decide"
-        
-class DirectAnswer(Node):
-    def prep(self, shared):
-        return shared["query"], shared.get("context", "")
-        
-    def exec(self, inputs):
-        query, context = inputs
-        return call_llm(f"Context: {context}\nAnswer: {query}")
+        Purpose:
+        - Write results to shared store
+        - Update database
+        - Log results
+        - Return action for flow transition
 
-    def post(self, shared, prep_res, exec_res):
-       print(f"Answer: {exec_res}")
-       shared["answer"] = exec_res
+        Args:
+            shared: The shared store dictionary
+            prep_res: Output from prep()
+            exec_res: Output from exec()
 
-# Connect nodes
-decide = DecideAction()
-search = SearchWeb()
-answer = DirectAnswer()
+        Returns:
+            Action string for flow transition (default: "default")
+        """
+        shared["output_key"] = exec_res
+        return "default"  # or specific action name
 
-decide - "search" >> search
-decide - "answer" >> answer
-search - "decide" >> decide  # Loop back
-
-flow = Flow(start=decide)
-flow.run({"query": "Who won the Nobel Prize in Physics 2024?"})
+# Usage with retry configuration
+node = ExampleNode()
+node.max_retries = 3  # Retry up to 3 times
+node.wait = 2.0       # Wait 2 seconds between retries
 ```
 
-================================================
-File: docs/design_pattern/mapreduce.md
-================================================
----
-layout: default
-title: "Map Reduce"
-parent: "Design Pattern"
-nav_order: 4
----
+### Flow Patterns
 
-# Map Reduce
+#### Sequential Flow
+```python
+# Simple sequence
+parse_node >> segment_node >> embed_node >> store_node
 
-MapReduce is a design pattern suitable when you have either:
-- Large input data (e.g., multiple files to process), or
-- Large output data (e.g., multiple forms to fill)
+# Create flow
+flow = Flow(start=parse_node)
+flow.run(shared)
+```
 
-and there is a logical way to break the task into smaller, ideally independent parts. 
+#### Branching Flow
+```python
+# Decision-based branching
+decide_node - "search" >> search_node
+decide_node - "answer" >> answer_node
 
-<div align="center">
-  <img src="https://github.com/the-pocket/.github/raw/main/assets/mapreduce.png?raw=true" width="400"/>
-</div>
+# Loop back pattern
+search_node - "continue" >> decide_node  # Loop back
+search_node - "done" >> answer_node      # Exit loop
 
-You first break down the task using [BatchNode](../core_abstraction/batch.md) in the map phase, followed by aggregation in the reduce phase.
+# Create flow
+flow = Flow(start=decide_node)
+```
 
-### Example: Document Summarization
+#### Nested Flow
+```python
+# Sub-flow composition
+file_flow = Flow(start=load_node >> process_node >> save_node)
+
+# Batch flow that runs file_flow multiple times
+class ProcessAllFiles(BatchFlow):
+    def prep(self, shared):
+        return [{"filename": f} for f in shared["files"]]
+
+batch_flow = ProcessAllFiles(start=file_flow)
+```
+
+### Shared Store Design
+
+**Hierarchical organization for this project:**
 
 ```python
-class SummarizeAllFiles(BatchNode):
-    def prep(self, shared):
-        files_dict = shared["files"]  # e.g. 10 files
-        return list(files_dict.items())  # [("file1.txt", "aaa..."), ("file2.txt", "bbb..."), ...]
-
-    def exec(self, one_file):
-        filename, file_content = one_file
-        summary_text = call_llm(f"Summarize the following file:\n{file_content}")
-        return (filename, summary_text)
-
-    def post(self, shared, prep_res, exec_res_list):
-        shared["file_summaries"] = dict(exec_res_list)
-
-class CombineSummaries(Node):
-    def prep(self, shared):
-        return shared["file_summaries"]
-
-    def exec(self, file_summaries):
-        # format as: "File1: summary\nFile2: summary...\n"
-        text_list = []
-        for fname, summ in file_summaries.items():
-            text_list.append(f"{fname} summary:\n{summ}\n")
-        big_text = "\n---\n".join(text_list)
-
-        return call_llm(f"Combine these file summaries into one final summary:\n{big_text}")
-
-    def post(self, shared, prep_res, final_summary):
-        shared["all_files_summary"] = final_summary
-
-batch_node = SummarizeAllFiles()
-combine_node = CombineSummaries()
-batch_node >> combine_node
-
-flow = Flow(start=batch_node)
-
 shared = {
-    "files": {
-        "file1.txt": "Alice was beginning to get very tired of sitting by her sister...",
-        "file2.txt": "Some other interesting text ...",
-        # ...
+    "input": {
+        "content": "text to process",
+        "metadata": {
+            "source": "chapter_1.md",
+            "chapter": "chapter_1",
+            "beat": "opening",
+            "timestamp": "2024-01-01T00:00:00Z"
+        }
+    },
+    "processing": {
+        "spans": [],           # List of text spans
+        "questions": [],       # Generated questions
+        "answers": [],         # Generated answers
+        "embeddings": [],      # Vector embeddings
+        "citations": []        # Citation references
+    },
+    "output": {
+        "results": [],
+        "summary": "",
+        "metrics": {
+            "processing_time": 0,
+            "spans_created": 0,
+            "questions_generated": 0
+        }
+    },
+    "context": {
+        "persona_id": None,
+        "user_preferences": {},
+        "session_data": {}
     }
 }
-flow.run(shared)
-print("Individual Summaries:", shared["file_summaries"])
-print("\nFinal Summary:\n", shared["all_files_summary"])
 ```
 
-================================================
-File: docs/design_pattern/rag.md
-================================================
----
-layout: default
-title: "RAG"
-parent: "Design Pattern"
-nav_order: 3
----
+### Design Patterns
 
-# RAG (Retrieval Augmented Generation)
+#### 1. RAG (Retrieval Augmented Generation)
 
-For certain LLM tasks like answering questions, providing relevant context is essential. One common architecture is a **two-stage** RAG pipeline:
-
-<div align="center">
-  <img src="https://github.com/the-pocket/.github/raw/main/assets/rag.png?raw=true" width="400"/>
-</div>
-
-1. **Offline stage**: Preprocess and index documents ("building the index").
-2. **Online stage**: Given a question, generate answers by retrieving the most relevant context.
-
----
-## Stage 1: Offline Indexing
-
-We create three Nodes:
-1. `ChunkDocs` – [chunks](../utility_function/chunking.md) raw text.
-2. `EmbedDocs` – [embeds](../utility_function/embedding.md) each chunk.
-3. `StoreIndex` – stores embeddings into a [vector database](../utility_function/vector.md).
+**When to use:** Answering questions with context from knowledge base
 
 ```python
-class ChunkDocs(BatchNode):
+class RetrieveNode(Node):
     def prep(self, shared):
-        # A list of file paths in shared["files"]. We process each file.
-        return shared["files"]
+        return shared["query"]
 
-    def exec(self, filepath):
-        # read file content. In real usage, do error handling.
-        with open(filepath, "r", encoding="utf-8") as f:
-            text = f.read()
-        # chunk by 100 chars each
-        chunks = []
-        size = 100
-        for i in range(0, len(text), size):
-            chunks.append(text[i : i + size])
-        return chunks
-    
-    def post(self, shared, prep_res, exec_res_list):
-        # exec_res_list is a list of chunk-lists, one per file.
-        # flatten them all into a single list of chunks.
-        all_chunks = []
-        for chunk_list in exec_res_list:
-            all_chunks.extend(chunk_list)
-        shared["all_chunks"] = all_chunks
+    def exec(self, query):
+        # Semantic search in Qdrant
+        return vector_search(query, collection="thoughts_q")
 
-class EmbedDocs(BatchNode):
+    def post(self, shared, prep_res, exec_res):
+        shared["retrieved_context"] = exec_res
+        return "default"
+
+class GenerateAnswerNode(Node):
     def prep(self, shared):
-        return shared["all_chunks"]
+        return {
+            "query": shared["query"],
+            "context": shared["retrieved_context"]
+        }
 
-    def exec(self, chunk):
-        return get_embedding(chunk)
+    def exec(self, prep_res):
+        prompt = f"""
+Query: {prep_res['query']}
 
-    def post(self, shared, prep_res, exec_res_list):
-        # Store the list of embeddings.
-        shared["all_embeds"] = exec_res_list
-        print(f"Total embeddings: {len(exec_res_list)}")
+Context:
+{prep_res['context']}
 
-class StoreIndex(Node):
-    def prep(self, shared):
-        # We'll read all embeds from shared.
-        return shared["all_embeds"]
-
-    def exec(self, all_embeds):
-        # Create a vector index (faiss or other DB in real usage).
-        index = create_index(all_embeds)
-        return index
-
-    def post(self, shared, prep_res, index):
-        shared["index"] = index
-
-# Wire them in sequence
-chunk_node = ChunkDocs()
-embed_node = EmbedDocs()
-store_node = StoreIndex()
-
-chunk_node >> embed_node >> store_node
-
-OfflineFlow = Flow(start=chunk_node)
-```
-
-Usage example:
-
-```python
-shared = {
-    "files": ["doc1.txt", "doc2.txt"],  # any text files
-}
-OfflineFlow.run(shared)
-```
-
----
-## Stage 2: Online Query & Answer
-
-We have 3 nodes:
-1. `EmbedQuery` – embeds the user’s question.
-2. `RetrieveDocs` – retrieves top chunk from the index.
-3. `GenerateAnswer` – calls the LLM with the question + chunk to produce the final answer.
-
-```python
-class EmbedQuery(Node):
-    def prep(self, shared):
-        return shared["question"]
-
-    def exec(self, question):
-        return get_embedding(question)
-
-    def post(self, shared, prep_res, q_emb):
-        shared["q_emb"] = q_emb
-
-class RetrieveDocs(Node):
-    def prep(self, shared):
-        # We'll need the query embedding, plus the offline index/chunks
-        return shared["q_emb"], shared["index"], shared["all_chunks"]
-
-    def exec(self, inputs):
-        q_emb, index, chunks = inputs
-        I, D = search_index(index, q_emb, top_k=1)
-        best_id = I[0][0]
-        relevant_chunk = chunks[best_id]
-        return relevant_chunk
-
-    def post(self, shared, prep_res, relevant_chunk):
-        shared["retrieved_chunk"] = relevant_chunk
-        print("Retrieved chunk:", relevant_chunk[:60], "...")
-
-class GenerateAnswer(Node):
-    def prep(self, shared):
-        return shared["question"], shared["retrieved_chunk"]
-
-    def exec(self, inputs):
-        question, chunk = inputs
-        prompt = f"Question: {question}\nContext: {chunk}\nAnswer:"
+Answer the query using the context. Include citations.
+"""
         return call_llm(prompt)
 
-    def post(self, shared, prep_res, answer):
-        shared["answer"] = answer
-        print("Answer:", answer)
+    def post(self, shared, prep_res, exec_res):
+        shared["answer"] = exec_res
+        return "default"
 
-embed_qnode = EmbedQuery()
-retrieve_node = RetrieveDocs()
-generate_node = GenerateAnswer()
-
-embed_qnode >> retrieve_node >> generate_node
-OnlineFlow = Flow(start=embed_qnode)
+# Flow
+retrieve >> generate
+rag_flow = Flow(start=retrieve)
 ```
 
-Usage example:
+#### 2. Map-Reduce
+
+**When to use:** Processing large datasets or multiple items
 
 ```python
-# Suppose we already ran OfflineFlow and have:
-# shared["all_chunks"], shared["index"], etc.
-shared["question"] = "Why do people like cats?"
+class MapQuestions(BatchNode):
+    """Generate questions for each span."""
 
-OnlineFlow.run(shared)
-# final answer in shared["answer"]
+    def prep(self, shared):
+        # Return list of spans to process
+        return shared["processing"]["spans"]
+
+    def exec(self, span):
+        # Process single span
+        prompt = f"Generate 3 atomic questions about: {span['content']}"
+        questions = call_llm(prompt)
+        return parse_questions(questions)
+
+    def post(self, shared, prep_res, exec_res_list):
+        # Flatten all question lists
+        all_questions = [q for qs in exec_res_list for q in qs]
+        shared["processing"]["questions"] = all_questions
+        return "default"
+
+class ReduceQuestions(Node):
+    """Deduplicate and consolidate questions."""
+
+    def prep(self, shared):
+        return shared["processing"]["questions"]
+
+    def exec(self, questions):
+        # Use clustering to deduplicate
+        return deduplicate_questions(questions)
+
+    def post(self, shared, prep_res, exec_res):
+        shared["processing"]["questions"] = exec_res
+        return "default"
+
+# Flow
+map_node >> reduce_node
+mapreduce_flow = Flow(start=map_node)
 ```
 
-================================================
-File: docs/design_pattern/structure.md
-================================================
----
-layout: default
-title: "Structured Output"
-parent: "Design Pattern"
-nav_order: 5
----
+#### 3. Agent Pattern
 
-# Structured Output
-
-In many use cases, you may want the LLM to output a specific structure, such as a list or a dictionary with predefined keys.
-
-There are several approaches to achieve a structured output:
-- **Prompting** the LLM to strictly return a defined structure.
-- Using LLMs that natively support **schema enforcement**.
-- **Post-processing** the LLM's response to extract structured content.
-
-In practice, **Prompting** is simple and reliable for modern LLMs.
-
-### Example Use Cases
-
-- Extracting Key Information 
-
-```yaml
-product:
-  name: Widget Pro
-  price: 199.99
-  description: |
-    A high-quality widget designed for professionals.
-    Recommended for advanced users.
-```
-
-- Summarizing Documents into Bullet Points
-
-```yaml
-summary:
-  - This product is easy to use.
-  - It is cost-effective.
-  - Suitable for all skill levels.
-```
-
-- Generating Configuration Files
-
-```yaml
-server:
-  host: 127.0.0.1
-  port: 8080
-  ssl: true
-```
-
-## Prompt Engineering
-
-When prompting the LLM to produce **structured** output:
-1. **Wrap** the structure in code fences (e.g., `yaml`).
-2. **Validate** that all required fields exist (and let `Node` handles retry).
-
-### Example Text Summarization
+**When to use:** Dynamic decision-making based on context
 
 ```python
-class SummarizeNode(Node):
+class DecideActionNode(Node):
+    """Agent decides next action based on context."""
+
+    def prep(self, shared):
+        return {
+            "task": shared["context"]["task"],
+            "previous_actions": shared["context"].get("actions", []),
+            "available_actions": ["search", "analyze", "answer", "clarify"]
+        }
+
     def exec(self, prep_res):
-        # Suppose `prep_res` is the text to summarize.
         prompt = f"""
-Please summarize the following text as YAML, with exactly 3 bullet points
+Task: {prep_res['task']}
+Previous Actions: {prep_res['previous_actions']}
+Available Actions: {prep_res['available_actions']}
 
-{prep_res}
+Choose the next best action and explain why.
 
-Now, output:
+Output in YAML:
 ```yaml
-summary:
-  - bullet 1
-  - bullet 2
-  - bullet 3
-```"""
+action: [action_name]
+reasoning: [explanation]
+parameters:
+  key: value
+```
+"""
         response = call_llm(prompt)
-        yaml_str = response.split("```yaml")[1].split("```")[0].strip()
+        yaml_str = response.split("```yaml")[1].split("```")[0]
+        decision = yaml.safe_load(yaml_str)
 
-        import yaml
-        structured_result = yaml.safe_load(yaml_str)
+        # Validate decision
+        assert decision["action"] in prep_res["available_actions"]
 
-        assert "summary" in structured_result
-        assert isinstance(structured_result["summary"], list)
+        return decision
 
-        return structured_result
+    def post(self, shared, prep_res, exec_res):
+        # Store decision
+        shared["context"].setdefault("actions", []).append(exec_res)
+        # Return action as flow transition
+        return exec_res["action"]
+
+# Flow with branching
+decide - "search" >> search_node
+decide - "analyze" >> analyze_node
+decide - "answer" >> answer_node
+decide - "clarify" >> clarify_node
+
+# All actions can loop back to decide
+search_node >> decide
+analyze_node >> decide
+clarify_node >> decide
+# Only answer completes the flow
+
+agent_flow = Flow(start=decide)
 ```
 
-> Besides using `assert` statements, another popular way to validate schemas is [Pydantic](https://github.com/pydantic/pydantic)
-{: .note }
+### Utility Functions
 
-### Why YAML instead of JSON?
+**Key principle:** NO exception handling in utilities. Let Node retry mechanism handle failures.
 
-Current LLMs struggle with escaping. YAML is easier with strings since they don't always need quotes.
+```python
+# utils/call_llm.py
+from core.models import ModelRegistry
 
-**In JSON**  
+def call_llm(prompt: str, model: str = "default") -> str:
+    """
+    Call LLM with prompt.
 
-```json
-{
-  "dialogue": "Alice said: \"Hello Bob.\\nHow are you?\\nI am good.\""
+    Args:
+        prompt: The prompt string
+        model: Model identifier (default uses ModelRegistry default)
+
+    Returns:
+        Generated text response
+
+    Raises:
+        Exception: Any error is raised to trigger Node retry
+    """
+    # NO try/except - let Node handle retries
+    registry = ModelRegistry()
+    response = registry.generate(prompt, model=model)
+    return response
+
+# Test function
+if __name__ == "__main__":
+    result = call_llm("Hello, how are you?")
+    print(result)
+```
+
+```python
+# utils/vector_search.py
+from core.db import get_qdrant_client
+from utils.get_embedding import get_embedding
+
+def vector_search(
+    query: str,
+    collection: str = "thoughts_q",
+    limit: int = 10
+) -> list[dict]:
+    """
+    Semantic search in Qdrant.
+
+    Args:
+        query: Search query
+        collection: Qdrant collection name
+        limit: Maximum results
+
+    Returns:
+        List of search results with id, content, score
+    """
+    # Get embedding
+    query_vector = get_embedding(query)
+
+    # Search
+    client = get_qdrant_client()
+    results = client.search(
+        collection_name=collection,
+        query_vector=query_vector,
+        limit=limit
+    )
+
+    return [
+        {
+            "id": r.id,
+            "content": r.payload.get("content"),
+            "score": r.score,
+            "metadata": r.payload.get("metadata", {})
+        }
+        for r in results
+    ]
+
+if __name__ == "__main__":
+    results = vector_search("What is AEGIS?")
+    print(f"Found {len(results)} results")
+    for r in results:
+        print(f"Score: {r['score']:.3f} - {r['content'][:100]}")
+```
+
+---
+
+## Frontend Development
+
+### Next.js App Router Patterns
+
+#### Page Structure
+```typescript
+// app/chat/page.tsx
+import { ChatInterface } from '@/components/chat-interface';
+
+export default function ChatPage() {
+  return (
+    <main className="container mx-auto p-4">
+      <ChatInterface />
+    </main>
+  );
 }
 ```
 
-- Every double quote inside the string must be escaped with `\"`.
-- Each newline in the dialogue must be represented as `\n`.
+#### API Route Pattern
+```typescript
+// app/api/query/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-**In YAML**  
+const QuerySchema = z.object({
+  query: z.string().min(1),
+  personaId: z.string().optional(),
+  limit: z.number().int().positive().default(10)
+});
 
-```yaml
-dialogue: |
-  Alice said: "Hello Bob.
-  How are you?
-  I am good."
+export async function POST(request: NextRequest) {
+  try {
+    // Parse and validate request
+    const body = await request.json();
+    const { query, personaId, limit } = QuerySchema.parse(body);
+
+    // Process query
+    const results = await processQuery(query, personaId, limit);
+
+    // Return response
+    return NextResponse.json({
+      success: true,
+      data: results,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        version: '1.0'
+      }
+    });
+
+  } catch (error) {
+    console.error('Query error:', error);
+
+    return NextResponse.json({
+      success: false,
+      error: {
+        code: 'QUERY_ERROR',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        details: error
+      }
+    }, { status: 500 });
+  }
+}
 ```
 
-- No need to escape interior quotes—just place the entire text under a block literal (`|`).
-- Newlines are naturally preserved without needing `\n`.
+#### Streaming API Route (ai-sdk v5)
+```typescript
+// app/api/chat/route.ts
+import { streamText } from 'ai';
+import { openai } from '@ai-sdk/openai';
 
-================================================
-File: docs/design_pattern/workflow.md
-================================================
----
-layout: default
-title: "Workflow"
-parent: "Design Pattern"
-nav_order: 2
----
+export async function POST(req: Request) {
+  const { messages } = await req.json();
 
-# Workflow
+  const result = await streamText({
+    model: openai('gpt-4'),
+    messages,
+  });
 
-Many real-world tasks are too complex for one LLM call. The solution is to **Task Decomposition**: decompose them into a [chain](../core_abstraction/flow.md) of multiple Nodes.
-
-<div align="center">
-  <img src="https://github.com/the-pocket/.github/raw/main/assets/workflow.png?raw=true" width="400"/>
-</div>
-
-> - You don't want to make each task **too coarse**, because it may be *too complex for one LLM call*.
-> - You don't want to make each task **too granular**, because then *the LLM call doesn't have enough context* and results are *not consistent across nodes*.
-> 
-> You usually need multiple *iterations* to find the *sweet spot*. If the task has too many *edge cases*, consider using [Agents](./agent.md).
-{: .best-practice }
-
-### Example: Article Writing
-
-```python
-class GenerateOutline(Node):
-    def prep(self, shared): return shared["topic"]
-    def exec(self, topic): return call_llm(f"Create a detailed outline for an article about {topic}")
-    def post(self, shared, prep_res, exec_res): shared["outline"] = exec_res
-
-class WriteSection(Node):
-    def prep(self, shared): return shared["outline"]
-    def exec(self, outline): return call_llm(f"Write content based on this outline: {outline}")
-    def post(self, shared, prep_res, exec_res): shared["draft"] = exec_res
-
-class ReviewAndRefine(Node):
-    def prep(self, shared): return shared["draft"]
-    def exec(self, draft): return call_llm(f"Review and improve this draft: {draft}")
-    def post(self, shared, prep_res, exec_res): shared["final_article"] = exec_res
-
-# Connect nodes
-outline = GenerateOutline()
-write = WriteSection()
-review = ReviewAndRefine()
-
-outline >> write >> review
-
-# Create and run flow
-writing_flow = Flow(start=outline)
-shared = {"topic": "AI Safety"}
-writing_flow.run(shared)
+  return result.toAIStreamResponse();
+}
 ```
 
-For *dynamic cases*, consider using [Agents](./agent.md).
+### Component Patterns
 
-================================================
-File: docs/utility_function/llm.md
-================================================
----
-layout: default
-title: "LLM Wrapper"
-parent: "Utility Function"
-nav_order: 1
----
+#### shadcn/ui Component Usage
+```typescript
+// components/chat-interface.tsx
+'use client';
 
-# LLM Wrappers
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { useChat } from 'ai/react';
 
-Check out libraries like [litellm](https://github.com/BerriAI/litellm). 
-Here, we provide some minimal example implementations:
+export function ChatInterface() {
+  const { messages, input, handleInputChange, handleSubmit } = useChat();
 
-1. OpenAI
-    ```python
-    def call_llm(prompt):
-        from openai import OpenAI
-        client = OpenAI(api_key="YOUR_API_KEY_HERE")
-        r = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return r.choices[0].message.content
+  return (
+    <Card className="p-4">
+      <div className="space-y-4">
+        {messages.map(m => (
+          <div key={m.id} className={m.role === 'user' ? 'text-right' : 'text-left'}>
+            <div className="inline-block p-2 rounded bg-muted">
+              {m.content}
+            </div>
+          </div>
+        ))}
+      </div>
 
-    # Example usage
-    call_llm("How are you?")
-    ```
-    > Store the API key in an environment variable like OPENAI_API_KEY for security.
-    {: .best-practice }
-
-2. Claude (Anthropic)
-    ```python
-    def call_llm(prompt):
-        from anthropic import Anthropic
-        client = Anthropic(api_key="YOUR_API_KEY_HERE")
-        r = client.messages.create(
-            model="claude-sonnet-4-0",
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return r.content[0].text
-    ```
-
-3. Google (Generative AI Studio / PaLM API)
-    ```python
-    def call_llm(prompt):
-    from google import genai
-    client = genai.Client(api_key='GEMINI_API_KEY')
-        response = client.models.generate_content(
-        model='gemini-2.5-pro',
-        contents=prompt
-    )
-    return response.text
-    ```
-
-4. Azure (Azure OpenAI)
-    ```python
-    def call_llm(prompt):
-        from openai import AzureOpenAI
-        client = AzureOpenAI(
-            azure_endpoint="https://<YOUR_RESOURCE_NAME>.openai.azure.com/",
-            api_key="YOUR_API_KEY_HERE",
-            api_version="2023-05-15"
-        )
-        r = client.chat.completions.create(
-            model="<YOUR_DEPLOYMENT_NAME>",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return r.choices[0].message.content
-    ```
-
-5. Ollama (Local LLM)
-    ```python
-    def call_llm(prompt):
-        from ollama import chat
-        response = chat(
-            model="llama2",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return response.message.content
-    ```
-
-## Improvements
-Feel free to enhance your `call_llm` function as needed. Here are examples:
-
-- Handle chat history:
-
-```python
-def call_llm(messages):
-    from openai import OpenAI
-    client = OpenAI(api_key="YOUR_API_KEY_HERE")
-    r = client.chat.completions.create(
-        model="gpt-4o",
-        messages=messages
-    )
-    return r.choices[0].message.content
+      <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
+        <Input
+          value={input}
+          onChange={handleInputChange}
+          placeholder="Ask a question..."
+          className="flex-1"
+        />
+        <Button type="submit">Send</Button>
+      </form>
+    </Card>
+  );
+}
 ```
 
-- Add in-memory caching 
+---
 
+## API Development
+
+### Standard API Response Format
+
+All API endpoints should use this consistent format:
+
+```typescript
+interface APIResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+    details?: any;
+  };
+  metadata?: {
+    timestamp: string;
+    requestId?: string;
+    version: string;
+  };
+}
+```
+
+### API Endpoints
+
+#### 1. POST /api/ingest
+**Purpose:** Ingest content for processing
+
+```typescript
+// Request
+{
+  "content": string,
+  "metadata": {
+    "source": string,
+    "chapter": string,
+    "beat": string
+  }
+}
+
+// Response
+{
+  "success": true,
+  "data": {
+    "id": string,
+    "spans_created": number,
+    "processing_time": number
+  }
+}
+```
+
+#### 2. POST /api/qa-tag
+**Purpose:** Generate QA pairs and tags
+
+```typescript
+// Request
+{
+  "spanIds": string[]
+}
+
+// Response
+{
+  "success": true,
+  "data": {
+    "questions_generated": number,
+    "answers_generated": number,
+    "tags_created": number
+  }
+}
+```
+
+#### 3. POST /api/query
+**Purpose:** Semantic query with retrieval
+
+```typescript
+// Request
+{
+  "query": string,
+  "personaId"?: string,
+  "limit"?: number
+}
+
+// Response
+{
+  "success": true,
+  "data": {
+    "answer": string,
+    "citations": Array<{
+      "spanId": string,
+      "content": string,
+      "score": number
+    }>,
+    "nba_actions": Array<{
+      "type": string,
+      "label": string,
+      "data": any
+    }>
+  }
+}
+```
+
+#### 4. POST /api/judge/context
+**Purpose:** Evaluate context quality
+
+```typescript
+// Request
+{
+  "context": string,
+  "query": string,
+  "criteria": string[]
+}
+
+// Response
+{
+  "success": true,
+  "data": {
+    "quality_score": number,
+    "evaluation": {
+      "relevance": number,
+      "completeness": number,
+      "accuracy": number
+    },
+    "feedback": string,
+    "suggestions": string[]
+  }
+}
+```
+
+---
+
+## Testing Standards
+
+### Node Testing Pattern
 ```python
-from functools import lru_cache
+# packages/flows/tests/test_nodes.py
+import pytest
+from src.nodes import ParseNode
 
-@lru_cache(maxsize=1000)
-def call_llm(prompt):
-    # Your implementation here
+def test_parse_node():
+    """Test ParseNode splits content into spans."""
+    # Arrange
+    node = ParseNode()
+    shared = {
+        "input": {
+            "content": "Paragraph 1.\n\nParagraph 2.\n\nParagraph 3.",
+            "metadata": {"source": "test.md"}
+        },
+        "processing": {"spans": []}
+    }
+
+    # Act
+    node.run(shared)
+
+    # Assert
+    assert "spans" in shared["processing"]
+    assert len(shared["processing"]["spans"]) == 3
+    assert shared["processing"]["spans"][0]["content"] == "Paragraph 1."
+```
+
+### Flow Testing Pattern
+```python
+def test_ingestion_flow():
+    """Test complete ingestion flow."""
+    # Arrange
+    from src.flows import create_ingestion_flow
+    flow = create_ingestion_flow()
+    shared = {
+        "input": {"content": "Test content", "metadata": {}},
+        "processing": {},
+        "output": {}
+    }
+
+    # Act
+    flow.run(shared)
+
+    # Assert
+    assert shared["output"]["spans_created"] > 0
+    assert "summary" in shared["output"]
+```
+
+### API Testing Pattern
+```typescript
+// apps/web/__tests__/api/query.test.ts
+import { POST } from '@/app/api/query/route';
+
+describe('POST /api/query', () => {
+  it('should return results for valid query', async () => {
+    const request = new Request('http://localhost/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: 'What is AEGIS?' })
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.data.answer).toBeDefined();
+    expect(data.data.citations).toBeInstanceOf(Array);
+  });
+
+  it('should return error for invalid query', async () => {
+    const request = new Request('http://localhost/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: '' })
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(data.success).toBe(false);
+    expect(data.error).toBeDefined();
+  });
+});
+```
+
+---
+
+## Git Workflow
+
+### Branch Naming Convention
+- `feature/spec-name` - For spec-driven features
+- `fix/issue-description` - For bug fixes
+- `docs/update-description` - For documentation
+
+### Commit Message Format
+```
+type(scope): brief description
+
+Longer description if needed
+
+- Requirement: REQ-1.1
+- Task: Implement user authentication
+- Files: auth.py, user.py
+```
+
+**Types:** feat, fix, docs, style, refactor, test, chore
+
+### Pull Request Process
+
+1. Create branch from main
+2. Implement changes following spec
+3. Write tests
+4. Update documentation
+5. Create PR with this template:
+
+```markdown
+## Changes
+Brief description of what was implemented
+
+## Requirements Addressed
+- REQ-1.1: User authentication
+- REQ-2.3: Session management
+
+## Testing
+- [ ] Unit tests added/updated
+- [ ] Integration tests pass
+- [ ] Manual testing completed
+
+## Checklist
+- [ ] Code follows project patterns
+- [ ] Documentation updated
+- [ ] No breaking changes
+- [ ] Steering guidelines followed
+```
+
+---
+
+## Key Conventions
+
+### File Naming
+- **Python**: `snake_case.py`
+- **TypeScript**: `kebab-case.tsx` or `kebab-case.ts`
+- **Components**: `PascalCase.tsx` (for React components)
+- **Documentation**: `SCREAMING_CASE.md` for important docs, `lowercase.md` for others
+
+### Code Style
+
+#### Python
+```python
+# Use type hints
+def process_data(input_data: str, max_items: int = 10) -> list[dict]:
+    """Process input data and return results."""
     pass
+
+# Use descriptive variable names
+question_embeddings = get_embeddings(questions)
+
+# Prefer list comprehensions
+results = [process(item) for item in items if is_valid(item)]
 ```
 
-> ⚠️ Caching conflicts with Node retries, as retries yield the same result.
->
-> To address this, you could use cached results only if not retried.
-{: .warning }
+#### TypeScript
+```typescript
+// Use interfaces for object shapes
+interface QueryRequest {
+  query: string;
+  personaId?: string;
+  limit?: number;
+}
 
+// Use async/await
+async function fetchData(): Promise<Data> {
+  const response = await fetch('/api/data');
+  return response.json();
+}
 
+// Use destructuring
+const { query, limit = 10 } = request;
+```
+
+### Logging Standards
+
+#### Python
 ```python
-from functools import lru_cache
+import logging
 
-@lru_cache(maxsize=1000)
-def cached_call(prompt):
-    pass
+logger = logging.getLogger(__name__)
 
-def call_llm(prompt, use_cache):
-    if use_cache:
-        return cached_call(prompt)
-    # Call the underlying function directly
-    return cached_call.__wrapped__(prompt)
-
-class SummarizeNode(Node):
-    def exec(self, text):
-        return call_llm(f"Summarize: {text}", self.cur_retry==0)
+class ProcessNode(Node):
+    def exec(self, prep_res):
+        logger.info(f"Processing {len(prep_res)} items")
+        result = process_items(prep_res)
+        logger.debug(f"Result: {result}")
+        return result
 ```
 
-- Enable logging:
-
-```python
-def call_llm(prompt):
-    import logging
-    logging.info(f"Prompt: {prompt}")
-    response = ... # Your implementation here
-    logging.info(f"Response: {response}")
-    return response
+#### TypeScript
+```typescript
+// Use console methods appropriately
+console.log('Info:', data);        // Development info
+console.error('Error:', error);    // Errors
+console.warn('Warning:', warning); // Warnings
+console.debug('Debug:', details);  // Debug details
 ```
+
+### Environment Variables
+
+**Required:**
+- `DATABASE_URL` - PostgreSQL connection string
+- `QDRANT_URL` - Qdrant server URL
+- `QDRANT_API_KEY` - Qdrant API key (if needed)
+- `LM_STUDIO_URL` - LM Studio API URL (dev)
+- `OPENROUTER_API_KEY` - OpenRouter API key (prod)
+
+**Optional:**
+- `NODE_ENV` - Environment (development/production)
+- `LOG_LEVEL` - Logging level (debug/info/warn/error)
+
+### Quality Standards
+
+#### Code Quality
+- **Minimal Code**: Write only what's needed
+- **Type Safety**: Use TypeScript/Python type hints
+- **Error Handling**: Let PocketFlow handle Node retries
+- **Logging**: Add structured logging
+- **Documentation**: Comment complex logic
+
+#### Performance
+- **Database Queries**: Use indexes, limit results
+- **Vector Search**: Tune similarity thresholds
+- **LLM Calls**: Cache when appropriate
+- **Batch Processing**: Use BatchNode for large datasets
+
+#### Security
+- **API Keys**: Never commit to git
+- **Input Validation**: Use Zod for TypeScript
+- **SQL Injection**: Use parameterized queries
+- **XSS**: Sanitize user input
+
+---
+
+## Quick Reference
+
+### Common Commands
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run development server
+pnpm dev
+
+# Run tests
+pnpm test
+
+# Type check
+pnpm type-check
+
+# Lint
+pnpm lint
+
+# Build
+pnpm build
+```
+
+### Python Virtual Environment
+
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Database Setup
+
+```bash
+# Create PostgreSQL database
+createdb kohaerenz_protokoll
+
+# Run schema
+psql kohaerenz_protokoll < sql/schema.sql
+
+# Run migrations
+psql kohaerenz_protokoll < sql/migrations/001_initial.sql
+```
+
+### Qdrant Setup
+
+```bash
+# Start Qdrant (Docker)
+docker run -p 6333:6333 qdrant/qdrant
+
+# Create collections (use sql/qdrant_collections.json)
+```
+
+---
+
+## Getting Help
+
+### Documentation
+- **Architecture**: See `docs/ARCHITECTURE.md`
+- **API Docs**: See `docs/API.md`
+- **Prompts**: See `docs/PROMPTS.md`
+- **Steering Docs**: See `.kiro/steering/`
+
+### Design Patterns
+- **PocketFlow**: See `.kiro/steering/pocketflow-patterns.md`
+- **API Integration**: See `.kiro/steering/api-integration-patterns.md`
+- **Testing**: See `.kiro/steering/testing-patterns.md`
+
+### When in Doubt
+1. Check if a spec exists in `.kiro/specs/`
+2. Review similar existing code
+3. Consult steering documents
+4. Ask the human for clarification
+
+---
+
+## Remember
+
+1. **Spec-Driven**: All significant features need requirements → design → tasks
+2. **Start Simple**: Minimal implementation first, then iterate
+3. **Design First**: High-level design before coding
+4. **Ask Questions**: When unclear, ask rather than assume
+5. **Test Everything**: Write tests as you code
+6. **Document Changes**: Update docs with code changes
+7. **Follow Patterns**: Use established patterns from steering docs
+
+---
+
+*This document is the single source of truth for AI assistants working on Kohärenz Protokoll. When in doubt, refer back to this guide.*
