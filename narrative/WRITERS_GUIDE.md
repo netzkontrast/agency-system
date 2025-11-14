@@ -5,6 +5,10 @@
 **Status**: Living document - update as patterns emerge
 **Last Updated**: 2025-11-13
 
+> 📖 **Quick Reference**: See **[CHAPTER_INDEX.md](./CHAPTER_INDEX.md)** for what has been written in each chapter
+>
+> 📋 **Plot Structure**: See **[OVERALL_PLOT.md](./OVERALL_PLOT.md)** for complete narrative arc
+
 ---
 
 ## Core Mission Statement
