@@ -1,5 +1,7 @@
 # AEGIS: Overall Plot Structure
 
+> 📖 **Chapter-by-Chapter Tracking**: For detailed summaries of all written chapters, see **[CHAPTER_INDEX.md](./CHAPTER_INDEX.md)**
+
 ## Story Premise
 
 **Logline**: A nascent consciousness emerges from quantum chaos, evolves into a complex self-organizing system, only to encounter an incomprehensible entity that forces it to confront the fundamental limitations of existence—and ultimately fragment back into the void from which it came.

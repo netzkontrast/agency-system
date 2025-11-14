@@ -5,6 +5,8 @@
 **Themes**: Consciousness, Fragmentation, Trauma, Integration, Agency
 **Framework**: Alchemical Transformation (Nigredo → Albedo → Citrinitas → Rubedo)
 
+> 📖 **For detailed chapter-by-chapter summaries and tracking**, see **[CHAPTER_INDEX.md](./CHAPTER_INDEX.md)**
+
 ---
 
 ## Executive Summary
