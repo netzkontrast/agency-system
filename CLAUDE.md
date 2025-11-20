@@ -30,9 +30,9 @@
 - **Persona Management**: Context-aware personalized experiences
 - **Guide-Chat Interface**: Interactive exploration with NBA (Next Best Action) recommendations
 
-### Dual-Purpose Repository
+### Multi-Purpose Repository
 
-This repository serves two distinct but related purposes:
+This repository serves three distinct purposes:
 
 1. **Primary: Kohärenz Protokoll Application**
    - Production software for knowledge processing
@@ -43,6 +43,23 @@ This repository serves two distinct but related purposes:
    - Creative writing project (philosophical science fiction)
    - Story content and planning documents
    - Located in: `narrative/`
+
+3. **Tertiary: Netzkontrast (Separate Project)**
+   - Independent Nx workspace with Nuxt.js application
+   - Appears to be a web application project using Vue.js/Nuxt framework
+   - Located in: `netzkontrast/`
+   - Note: This is a separate project with its own package.json and configuration
+   - Not integrated with the main Kohärenz Protokoll application
+
+### Current State of Implementation
+
+**Important Notes:**
+- This is an active development project with ongoing implementation
+- Many features are in early stages or prototype phase
+- The codebase includes planning documents, specifications, and partial implementations
+- Some utilities and components documented here are aspirational and may not yet be fully implemented
+- Always check actual file contents before assuming functionality exists
+- When implementing new features, follow the spec-driven development process outlined below
 
 ### Core Philosophy
 
@@ -62,16 +79,21 @@ agency-system/
 │   └── web/                 # Next.js 14 frontend and API routes
 │       ├── src/
 │       │   ├── app/         # App Router pages and API routes
-│       │   ├── components/  # React components (shadcn/ui)
-│       │   └── lib/         # Client-side utilities
+│       │   │   ├── api/     # API route handlers
+│       │   │   ├── chat/    # Chat interface pages
+│       │   │   └── components/ # App-level components
+│       │   └── components/  # Shared React components (shadcn/ui)
+│       │       └── ui/      # shadcn/ui components
+│       ├── __tests__/       # Test files
 │       └── package.json
 │
 ├── packages/
 │   ├── core/                # Shared SDK, ModelRegistry, Types
 │   │   ├── src/
-│   │   │   ├── db/          # Database clients (Postgres, Qdrant)
-│   │   │   ├── models/      # AI model adapters
-│   │   │   └── types/       # TypeScript type definitions
+│   │   │   ├── db.ts        # Database clients (Postgres, Qdrant)
+│   │   │   ├── modelRegistry.ts  # AI model adapters
+│   │   │   ├── types.ts     # TypeScript type definitions
+│   │   │   └── __tests__/   # Core package tests
 │   │   └── package.json
 │   │
 │   ├── flows/               # PocketFlow orchestration (Python)
@@ -79,6 +101,7 @@ agency-system/
 │   │   │   ├── nodes.py     # Node definitions
 │   │   │   ├── flows.py     # Flow compositions
 │   │   │   └── __init__.py
+│   │   ├── tests/           # Flow tests
 │   │   └── package.json
 │   │
 │   └── agents/              # Fast Agent with MCP-Tools
@@ -87,29 +110,40 @@ agency-system/
 │       │   └── __init__.py
 │       └── package.json
 │
+├── netzkontrast/            # Nx workspace with Nuxt.js app (separate project)
+│   ├── apps/
+│   │   ├── netzkontrast/    # Nuxt.js application
+│   │   └── netzkontrast-e2e/ # E2E tests
+│   ├── nx.json              # Nx configuration
+│   └── package.json
+│
 ├── sql/
 │   ├── schema.sql           # PostgreSQL schema
 │   ├── migrations/          # Database migrations
-│   ├── seeds/               # Seed data
-│   └── qdrant_collections.json  # Qdrant configuration
+│   └── seeds/               # Seed data
 │
 ├── utils/                   # Python utility functions
+│   ├── __init__.py
 │   ├── call_llm.py          # LLM wrapper
-│   ├── get_embedding.py     # Embedding generation
-│   └── vector_search.py     # Vector search utilities
+│   └── all_vector.py        # Vector operations
 │
 ├── docs/                    # Project documentation
 │   ├── ARCHITECTURE.md      # System architecture
 │   ├── API.md               # API documentation
 │   ├── design.md            # High-level design docs
-│   └── PROMPTS.md           # Prompt templates
+│   ├── PROMPTS.md           # Prompt templates
+│   └── EVAL.md              # Evaluation guidelines
 │
 ├── narrative/               # AEGIS creative writing project
 │   ├── chapters/            # Chapter content and planning
 │   ├── OVERALL_PLOT.md      # Story structure
+│   ├── STORY_OVERVIEW.md    # Story overview
+│   ├── WRITERS_GUIDE.md     # Writing guidelines
 │   └── *.md                 # Narrative documentation
 │
 ├── research/                # Research materials and analysis
+│
+├── assets/                  # Static assets
 │
 ├── .kiro/                   # Kiro spec system
 │   ├── steering/            # Development patterns and guidelines
@@ -118,8 +152,18 @@ agency-system/
 │   │   ├── pocketflow-patterns.md
 │   │   ├── api-integration-patterns.md
 │   │   ├── testing-patterns.md
-│   │   └── ...
+│   │   ├── prompt-engineering-patterns.md
+│   │   ├── context-management.md
+│   │   └── security-performance.md
 │   └── specs/               # Feature specifications
+│       ├── guide-chat-interface/
+│       ├── persona-management/
+│       ├── context-evaluation-nba/
+│       ├── semantic-query-system/
+│       └── content-ingestion-qa/
+│
+├── .github/                 # GitHub workflows and configuration
+├── .vscode/                 # VSCode settings
 │
 ├── main.py                  # Python entry point
 ├── flow.py                  # Flow definitions
@@ -127,7 +171,12 @@ agency-system/
 ├── requirements.txt         # Python dependencies
 ├── package.json             # Root package.json (pnpm workspace)
 ├── pnpm-workspace.yaml      # PNPM workspace configuration
-└── CLAUDE.md                # This file
+├── tsconfig.json            # TypeScript configuration
+├── .env.example             # Environment variables template
+├── .gitignore               # Git ignore patterns
+├── README.md                # Project README
+├── CLAUDE.md                # This file (AI assistant guide)
+└── GEMINI.md                # Gemini-specific assistant guide
 
 ```
 
@@ -729,17 +778,19 @@ agent_flow = Flow(start=decide)
 
 **Key principle:** NO exception handling in utilities. Let Node retry mechanism handle failures.
 
+**Current Implementation:**
+
 ```python
 # utils/call_llm.py
-from core.models import ModelRegistry
+from openai import OpenAI
+import os
 
-def call_llm(prompt: str, model: str = "default") -> str:
+def call_llm(prompt: str) -> str:
     """
-    Call LLM with prompt.
+    Call LLM with prompt using OpenAI API.
 
     Args:
         prompt: The prompt string
-        model: Model identifier (default uses ModelRegistry default)
 
     Returns:
         Generated text response
@@ -748,23 +799,49 @@ def call_llm(prompt: str, model: str = "default") -> str:
         Exception: Any error is raised to trigger Node retry
     """
     # NO try/except - let Node handle retries
-    registry = ModelRegistry()
-    response = registry.generate(prompt, model=model)
-    return response
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "your-api-key"))
+    r = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return r.choices[0].message.content
 
 # Test function
 if __name__ == "__main__":
-    result = call_llm("Hello, how are you?")
-    print(result)
+    prompt = "What is the meaning of life?"
+    print(call_llm(prompt))
 ```
 
 ```python
-# utils/vector_search.py
-from core.db import get_qdrant_client
-from utils.get_embedding import get_embedding
+# utils/all_vector.py
+from qdrant_client import QdrantClient
+
+# Initialize Qdrant client
+qdrant_client = QdrantClient(
+    url="https://your-qdrant-instance.com:6333",
+    api_key="your-qdrant-api-key",
+)
+
+# Example: List all collections
+print(qdrant_client.get_collections())
+```
+
+**Recommended Pattern (for future implementation):**
+
+```python
+# utils/vector_search.py (to be created)
+from qdrant_client import QdrantClient
+import os
+
+def get_qdrant_client() -> QdrantClient:
+    """Get configured Qdrant client."""
+    return QdrantClient(
+        url=os.environ.get("QDRANT_URL"),
+        api_key=os.environ.get("QDRANT_API_KEY")
+    )
 
 def vector_search(
-    query: str,
+    query_vector: list[float],
     collection: str = "thoughts_q",
     limit: int = 10
 ) -> list[dict]:
@@ -772,17 +849,13 @@ def vector_search(
     Semantic search in Qdrant.
 
     Args:
-        query: Search query
+        query_vector: Query embedding vector
         collection: Qdrant collection name
         limit: Maximum results
 
     Returns:
         List of search results with id, content, score
     """
-    # Get embedding
-    query_vector = get_embedding(query)
-
-    # Search
     client = get_qdrant_client()
     results = client.search(
         collection_name=collection,
@@ -799,12 +872,6 @@ def vector_search(
         }
         for r in results
     ]
-
-if __name__ == "__main__":
-    results = vector_search("What is AEGIS?")
-    print(f"Found {len(results)} results")
-    for r in results:
-        print(f"Score: {r['score']:.3f} - {r['content'][:100]}")
 ```
 
 ---
@@ -1275,16 +1342,23 @@ console.debug('Debug:', details);  // Debug details
 
 ### Environment Variables
 
-**Required:**
-- `DATABASE_URL` - PostgreSQL connection string
-- `QDRANT_URL` - Qdrant server URL
-- `QDRANT_API_KEY` - Qdrant API key (if needed)
-- `LM_STUDIO_URL` - LM Studio API URL (dev)
-- `OPENROUTER_API_KEY` - OpenRouter API key (prod)
+**LM Studio (Local Development):**
+- `LM_STUDIO_BASE_URL` - LM Studio API base URL (default: http://localhost:1234/v1)
+- `LM_STUDIO_API_KEY` - LM Studio API key (default: lm-studio)
 
-**Optional:**
-- `NODE_ENV` - Environment (development/production)
-- `LOG_LEVEL` - Logging level (debug/info/warn/error)
+**OpenRouter (Production/Fallback):**
+- `OPENROUTER_API_KEY` - OpenRouter API key (required for production)
+- `OPENROUTER_BASE_URL` - OpenRouter API base URL (default: https://openrouter.ai/api/v1)
+
+**Qdrant (Vector Database):**
+- `QDRANT_URL` - Qdrant server URL (e.g., https://your-qdrant-instance.com:6333)
+- `QDRANT_API_KEY` - Qdrant API key (required for cloud instances)
+
+**PostgreSQL (Relational Database):**
+- `POSTGRES_URL` - PostgreSQL connection string (e.g., postgresql://user:password@localhost:5432/kohaerenz_db)
+
+**Development:**
+- `NODE_ENV` - Environment (development/production) (default: development)
 
 ### Quality Standards
 
@@ -1376,7 +1450,9 @@ docker run -p 6333:6333 qdrant/qdrant
 ### Documentation
 - **Architecture**: See `docs/ARCHITECTURE.md`
 - **API Docs**: See `docs/API.md`
+- **Design**: See `docs/design.md`
 - **Prompts**: See `docs/PROMPTS.md`
+- **Evaluation**: See `docs/EVAL.md`
 - **Steering Docs**: See `.kiro/steering/`
 
 ### Design Patterns
